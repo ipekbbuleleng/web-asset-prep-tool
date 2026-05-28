@@ -1,7 +1,7 @@
 {
   "name": "Web Asset Prep Tool",
   "short_name": "Asset Prep",
-  "description": "Portal PWA lokal untuk Image Optimizer biasa dan Background Remover ringan dengan tool mode visible fix.",
+  "description": "Portal PWA lokal untuk Image Optimizer biasa dan Background Remover ringan dengan UX polish dan checkbox suppression.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R4-R3-R1 — Tool Mode Visible Fix
+# Web Asset Prep Tool v1-R5-R3-R4-R3-R2 — Redundant Checkbox Suppression & Tool Mode UX Polish
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -421,3 +421,23 @@ Perbaikan:
 - Mode `Background Remover Ringan` menampilkan panel hapus background dan compare before/after.
 - Panel Background Remover dan Compare tetap disembunyikan saat mode Image Optimizer Biasa aktif.
 - Service worker cache version dinaikkan.
+
+
+## Perbaikan v1-R5-R3-R4-R3-R2 — Redundant Checkbox Suppression & Tool Mode UX Polish
+
+Paket ini memoles pemisahan mode kerja pada `Image Tool`.
+
+Perubahan:
+- Checkbox `Aktifkan hapus background` tidak lagi ditampilkan sebagai pilihan manual.
+- Di mode `Background Remover Ringan`, panel menampilkan status:
+  `Background Remover Aktif`.
+- Mode tool sekarang menjadi pengendali utama:
+  - `Image Optimizer Biasa` = resize/convert/responsive/batch tanpa panel hapus background.
+  - `Background Remover Ringan` = hapus background aktif, color picker aktif, connected area aktif, compare aktif.
+- Teks bantuan pilihan tool dipoles agar lebih jelas.
+- Landing page version badge diselaraskan dengan versi paket terbaru.
+- Service worker cache version dinaikkan.
+
+Catatan:
+- Input checkbox tetap dipertahankan secara hidden untuk kompatibilitas internal JavaScript.
+- Pengguna tidak perlu lagi mencentang background remover secara terpisah setelah memilih mode `Background Remover Ringan`.

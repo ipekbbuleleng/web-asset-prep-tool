@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-r3-r4-r3-r1-tool-mode-visible-fix";
+const APP_VERSION = "1.0.6-r5-r3-r4-r3-r2-checkbox-polish";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -187,6 +187,9 @@ function bindEvents() {
   });
 
   els.bgRemoveInput?.addEventListener("change", () => {
+    if (state.toolMode === "background") {
+      els.bgRemoveInput.checked = true;
+    }
     syncBackgroundControls();
   });
 
@@ -406,6 +409,7 @@ function setToolMode(mode) {
 
   if (els.bgRemoveInput) {
     els.bgRemoveInput.checked = state.toolMode === "background";
+    els.bgRemoveInput.disabled = state.toolMode !== "background";
   }
 
   if (state.toolMode !== "background") {
@@ -431,6 +435,7 @@ function updateToolModeView() {
 
   if (els.bgRemoveInput) {
     els.bgRemoveInput.checked = isBackgroundMode;
+    els.bgRemoveInput.disabled = !isBackgroundMode;
   }
 
   syncBackgroundControls();

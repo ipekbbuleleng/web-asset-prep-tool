@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4-R3-R1</title>
+  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4-R3-R2</title>
   <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -78,7 +78,7 @@
       <div class="tool-mode-panel" aria-labelledby="tool-mode-title">
         <div>
           <h3 id="tool-mode-title">Pilih tool</h3>
-          <p>Gunakan Image Optimizer untuk resize/convert biasa. Gunakan Background Remover hanya untuk logo/gambar dengan latar polos.</p>
+          <p>Pilih Image Optimizer untuk resize/convert biasa. Pilih Background Remover untuk hapus latar polos dengan color picker dan compare.</p>
         </div>
 
         <div class="tool-mode-options" role="radiogroup" aria-label="Pilih mode Image Tool">
@@ -86,7 +86,7 @@
             <input type="radio" name="toolMode" id="toolModeImage" value="image" checked>
             <span>
               <strong>Image Optimizer Biasa</strong>
-              <small>Resize, convert WebP/JPG/PNG, responsive image, batch ZIP.</small>
+              <small>Resize, convert WebP/JPG/PNG, responsive image, batch ZIP. Tampilan ringkas tanpa panel hapus background.</small>
             </span>
           </label>
 
@@ -94,7 +94,7 @@
             <input type="radio" name="toolMode" id="toolModeBackground" value="background">
             <span>
               <strong>Background Remover Ringan</strong>
-              <small>Hapus background polos, pick warna dari gambar, connected area, compare.</small>
+              <small>Hapus background polos, pilih warna dari gambar, connected area, dan compare before/after.</small>
             </span>
           </label>
         </div>
@@ -181,10 +181,11 @@
         </div>
 
         <div class="background-options-grid">
-          <label class="check-row background-toggle">
-            <input id="bgRemoveInput" type="checkbox">
-            <span>Aktifkan hapus background</span>
-          </label>
+          <div class="background-active-status">
+            <input id="bgRemoveInput" type="checkbox" checked hidden>
+            <span class="status-pill status-ready">Background Remover Aktif</span>
+            <span>Mode ini otomatis mengaktifkan hapus background. Gunakan Image Optimizer Biasa bila hanya ingin resize/convert.</span>
+          </div>
 
           <label class="check-row background-toggle">
             <input id="bgConnectedInput" type="checkbox" checked disabled>

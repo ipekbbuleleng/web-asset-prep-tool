@@ -958,3 +958,40 @@ body.is-image-tool .bg-tool-only {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v1-R5-R3-R4-R3-R2 — Redundant checkbox suppression & tool mode UX polish */
+.background-active-status {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(204, 251, 241, 0.22);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.background-active-status .status-pill {
+  flex: 0 0 auto;
+}
+
+.tool-mode-card {
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.tool-mode-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+body.is-background-tool .tool-mode-panel {
+  border-color: rgba(15, 118, 110, 0.25);
+}
+
+body.is-image-tool .tool-mode-panel {
+  border-color: var(--line);
+}
