@@ -33,15 +33,15 @@
       <div class="panel-header">
         <div>
           <h2 id="upload-title">1. Upload aset</h2>
-          <p>Pilih JPG, PNG, atau WebP. Semua proses berjalan lokal di browser.</p>
+          <p>Pilih JPG, PNG, WebP, HEIC, atau HEIF. Semua proses berjalan lokal di browser.</p>
         </div>
       </div>
 
       <label id="dropZone" class="drop-zone" for="fileInput">
-        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp">
+        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif">
         <span class="drop-icon" aria-hidden="true">⇪</span>
         <strong>Tarik gambar ke sini atau klik untuk memilih file</strong>
-        <small>Disarankan: foto asli, banner, screenshot, atau gambar konten.</small>
+        <small>Disarankan: foto asli, banner, screenshot, atau gambar konten. HEIC/HEIF akan dibaca melalui decoder tambahan.</small>
       </label>
 
       <div id="fileInfo" class="file-info empty">

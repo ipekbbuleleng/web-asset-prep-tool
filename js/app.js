@@ -18,6 +18,12 @@ import {
   renderReport
 } from "./reportHelper.js";
 
+import {
+  convertHeicToJpegFile,
+  getReadableMimeLabel,
+  isHeicFile
+} from "./heicAdapter.js";
+
 const APP_VERSION = "1.0.0";
 
 const PRESETS = {
@@ -56,6 +62,9 @@ const PRESETS = {
 
 const state = {
   file: null,
+  processableFile: null,
+  isHeicInput: false,
+  heicNotice: "",
   originalMeta: null,
   originalObjectUrl: null,
   outputBlob: null,
@@ -147,25 +156,42 @@ function bindEvents() {
 async function handleFile(file) {
   clearOutputOnly();
 
-  if (!isSupportedImage(file)) {
-    showToast("Format belum didukung. Gunakan JPG, PNG, atau WebP.");
+  const isHeic = isHeicFile(file);
+
+  if (!isHeic && !isSupportedImage(file)) {
+    showToast("Format belum didukung. Gunakan JPG, PNG, WebP, HEIC, atau HEIF.");
     return;
   }
 
   try {
     releaseObjectUrl("originalObjectUrl");
     state.file = file;
-    state.originalMeta = await readImageMeta(file);
+    state.processableFile = file;
+    state.isHeicInput = isHeic;
+    state.heicNotice = "";
+
+    if (isHeic) {
+      showToast("Membaca HEIC/HEIF. Proses awal bisa lebih lama...");
+      state.processableFile = await convertHeicToJpegFile(file, { quality: 0.92 });
+      state.heicNotice = "HEIC/HEIF dikonversi dulu ke JPEG sementara di browser, lalu diproses menjadi output yang dipilih.";
+    }
+
+    state.originalMeta = await readImageMeta(state.processableFile);
     state.originalObjectUrl = state.originalMeta.objectUrl;
 
     els.originalPreview.src = state.originalObjectUrl;
     els.originalPreview.parentElement.classList.add("has-image");
 
+    const heicBadge = isHeic
+      ? `<br><small><strong>Catatan:</strong> ${escapeHtml(state.heicNotice)}</small>`
+      : "";
+
     els.fileInfo.classList.remove("empty");
     els.fileInfo.innerHTML = `
       <strong>${escapeHtml(file.name)}</strong><br>
-      ${escapeHtml(file.type)} · ${formatBytes(file.size)} ·
+      ${escapeHtml(getReadableMimeLabel(file))} · ${formatBytes(file.size)} ·
       ${state.originalMeta.width} × ${state.originalMeta.height}px
+      ${heicBadge}
     `;
 
     suggestOutputName();
@@ -175,7 +201,7 @@ async function handleFile(file) {
     }
 
     els.processBtn.disabled = false;
-    showToast("Gambar berhasil dibaca.");
+    showToast(isHeic ? "HEIC/HEIF berhasil dibaca." : "Gambar berhasil dibaca.");
   } catch (error) {
     console.error(error);
     showToast(error.message || "Gagal membaca gambar.");
@@ -225,7 +251,9 @@ async function processCurrentFile() {
     );
     const outputName = `${baseName}.${ext}`;
 
-    const result = await processImageFile(state.file, {
+    const processingSource = state.processableFile || state.file;
+
+    const result = await processImageFile(processingSource, {
       width: Number(els.widthInput.value),
       quality: Number(els.qualityInput.value),
       mimeType,
@@ -251,9 +279,9 @@ async function processCurrentFile() {
     els.reportBox.innerHTML = renderReport({
       originalName: state.file.name,
       outputName,
-      originalType: result.sourceMeta.type,
+      originalType: getReadableMimeLabel(state.file),
       outputType: result.outputMeta.type,
-      originalSize: result.sourceMeta.size,
+      originalSize: state.file.size,
       outputSize: result.outputMeta.size,
       originalWidth: result.sourceMeta.width,
       originalHeight: result.sourceMeta.height,
@@ -322,6 +350,9 @@ function resetApp() {
   clearOutputOnly();
 
   state.file = null;
+  state.processableFile = null;
+  state.isHeicInput = false;
+  state.heicNotice = "";
   state.originalMeta = null;
   state.originalObjectUrl = null;
 

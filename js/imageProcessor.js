@@ -9,7 +9,17 @@ export function getOutputExtension(mimeType) {
 }
 
 export function isSupportedImage(file) {
-  return ["image/jpeg", "image/png", "image/webp"].includes(file?.type);
+  const supportedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const name = String(file?.name || "").toLowerCase();
+  const type = String(file?.type || "").toLowerCase();
+
+  return (
+    supportedTypes.includes(type) ||
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".png") ||
+    name.endsWith(".webp")
+  );
 }
 
 export async function readImageMeta(file) {

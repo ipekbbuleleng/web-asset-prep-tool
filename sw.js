@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.0";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.1-heic";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "./js/imageProcessor.js",
   "./js/downloadHelper.js",
   "./js/reportHelper.js",
+  "./js/heicAdapter.js",
   "./assets/icons/icon.svg",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png"
