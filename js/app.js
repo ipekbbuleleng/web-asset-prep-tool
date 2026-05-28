@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-r3-r4-r1-compare-fix";
+const APP_VERSION = "1.0.6-r5-r3-r4-r2-compare-text-transparency-note";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -977,11 +977,20 @@ function renderExportPolishSummary({ item, outputs, mode }) {
   const firstOutput = outputs?.[0] || null;
   const transparentFriendly = ["image/png", "image/webp"].includes(firstOutput?.type || "");
   const hasBackgroundRemoval = outputs?.some((output) => !!output.backgroundRemoval);
+  const transparencyActive = hasBackgroundRemoval && transparentFriendly;
   const snippetType = mode === "responsive" ? "<picture> + srcset" : "<img>";
   const packageType = mode === "batch" || mode === "responsive" || (outputs?.length || 0) > 1
     ? "ZIP rapi berisi assets/images, snippets, dan reports"
     : "Single file langsung download";
   const formatLabel = firstOutput?.type ? escapeHtml(firstOutput.type) : escapeHtml(getEffectiveOutputMimeType());
+  const transparencyLabel = transparencyActive
+    ? '<span class="status-pill status-ready">Transparansi aktif</span> WebP/PNG mendukung area transparan.'
+    : (transparentFriendly
+      ? '<span class="status-pill status-ready">Aman</span> WebP/PNG mendukung transparansi bila ada alpha.'
+      : '<span class="status-pill status-check">Standar</span> Format ini tidak ditujukan untuk transparansi khusus.');
+  const previewNote = transparencyActive
+    ? "Jika hasil download tampak berlatar hitam di image viewer, biasanya itu hanya tampilan viewer. Cek di browser, editor, atau halaman web yang mendukung transparansi WebP/PNG."
+    : "Cek visual output di browser sebelum masuk repository.";
   const useNote = hasBackgroundRemoval
     ? (transparentFriendly
       ? "Cocok untuk logo, ikon, stiker, dan aset transparan di web/PWA."
@@ -995,12 +1004,13 @@ function renderExportPolishSummary({ item, outputs, mode }) {
         <tr><th>Bentuk download</th><td>${packageType}</td></tr>
         <tr><th>Format utama</th><td>${formatLabel}</td></tr>
         <tr><th>Snippet default</th><td><code>${escapeHtml(snippetType)}</code></td></tr>
-        <tr><th>Transparansi</th><td>${transparentFriendly ? '<span class="status-pill status-ready">Aman</span> WebP/PNG cocok untuk output transparan.' : '<span class="status-pill status-check">Standar</span> Tidak ditujukan untuk transparansi khusus.'}</td></tr>
+        <tr><th>Transparansi</th><td>${transparencyLabel}</td></tr>
+        <tr><th>Catatan preview</th><td>${escapeHtml(previewNote)}</td></tr>
         <tr><th>Saran pemakaian</th><td>${useNote}</td></tr>
       </tbody>
     </table>
     <div class="note-box">
-      Untuk final check, gunakan area <strong>Compare before/after</strong> di atas. Jika output dipakai di web, cukup salin snippet lalu unggah file hasil ke folder <code>assets/images</code>.
+      Untuk final check, gunakan area <strong>Compare before/after</strong> di atas. Kiri menampilkan <strong>output</strong>, kanan menampilkan <strong>original</strong>. Jika output dipakai di web, cukup salin snippet lalu unggah file hasil ke folder <code>assets/images</code>.
     </div>
   `;
 }

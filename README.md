@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R4-R1 — Compare Placeholder Hide & Direction Label Fix
+# Web Asset Prep Tool v1-R5-R3-R4-R2 — Compare Helper Text Alignment & Transparency Preview Note
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -368,3 +368,19 @@ Catatan:
 - Compare memakai original sebagai base layer.
 - Output ditampilkan sebagai overlay yang dibuka mengikuti posisi slider.
 - Label membantu membaca area mana yang sedang dilihat.
+
+
+## Perbaikan v1-R5-R3-R4-R2 — Compare Helper Text Alignment & Transparency Preview Note
+
+Paket ini memperbaiki catatan uji pada compare before/after dan preview transparansi.
+
+Perbaikan:
+- Teks bantuan compare disesuaikan menjadi:
+  `Kiri: output · kanan: original`.
+- Ringkasan export menambahkan catatan preview transparansi.
+- Laporan menampilkan label `Transparansi aktif` bila background remover aktif dan output memakai WebP/PNG.
+- Catatan bahwa image viewer tertentu dapat menampilkan area transparan sebagai latar hitam.
+- Service worker cache version dinaikkan.
+
+Catatan:
+- Untuk validasi transparansi, cek output di browser, editor gambar, atau halaman web yang mendukung transparansi WebP/PNG.
