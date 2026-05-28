@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R4 — Connected Area Background Remover
+# Web Asset Prep Tool v1-R5-R3-R4-R1 — Compare Placeholder Hide & Direction Label Fix
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -352,3 +352,19 @@ Catatan:
 - Cocok untuk logo/lencana dengan latar luar bidang tertentu, misalnya luar lingkaran/perisai.
 - Jika ada beberapa area background yang terpisah, klik area yang ingin dihapus atau nonaktifkan opsi area tersambung untuk mode global.
 - Untuk objek/foto kompleks, fitur ini tetap bukan AI background remover.
+
+
+## Perbaikan v1-R5-R3-R4-R1 — Compare Placeholder Hide & Direction Label Fix
+
+Paket ini memperbaiki catatan uji pada fitur Compare before/after.
+
+Perbaikan:
+- Placeholder compare disembunyikan otomatis setelah original dan output tersedia.
+- Area compare diberi label visual `Original` dan `Output`.
+- Slider compare diperjelas sebagai before/after wipe.
+- Service worker cache version dinaikkan.
+
+Catatan:
+- Compare memakai original sebagai base layer.
+- Output ditampilkan sebagai overlay yang dibuka mengikuti posisi slider.
+- Label membantu membaca area mana yang sedang dilihat.

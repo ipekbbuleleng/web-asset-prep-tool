@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-r3-r4-bg-compare-export";
+const APP_VERSION = "1.0.6-r5-r3-r4-r1-compare-fix";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -399,22 +399,29 @@ function updateCompareView() {
 
   const originalSrc = els.originalPreview?.getAttribute("src") || "";
   const outputSrc = els.outputPreview?.getAttribute("src") || "";
-  const hasCompare = !!(originalSrc && outputSrc);
+  const hasOriginal = !!originalSrc;
+  const hasOutput = !!outputSrc;
+  const hasCompare = hasOriginal && hasOutput;
 
-  if (originalSrc) {
+  if (hasOriginal) {
     els.compareOriginal.src = originalSrc;
   } else {
     els.compareOriginal.removeAttribute("src");
   }
 
-  if (outputSrc) {
+  if (hasOutput) {
     els.compareOutput.src = outputSrc;
   } else {
     els.compareOutput.removeAttribute("src");
   }
 
+  els.compareStage.classList.toggle("has-original", hasOriginal);
+  els.compareStage.classList.toggle("has-output", hasOutput);
   els.compareStage.classList.toggle("has-compare", hasCompare);
+
   els.compareEmpty.hidden = hasCompare;
+  els.compareEmpty.setAttribute("aria-hidden", hasCompare ? "true" : "false");
+
   updateCompareSlider();
 }
 

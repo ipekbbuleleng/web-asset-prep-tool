@@ -761,3 +761,55 @@ input[type="range"] { padding: 0; accent-color: var(--brand); }
   border: 2px solid rgba(15, 23, 42, 0.85);
   transform: translate(-50%, -50%);
 }
+
+
+/* v1-R5-R3-R4-R1 — Compare placeholder hide & direction label fix */
+.compare-stage.has-compare .compare-empty {
+  display: none !important;
+}
+
+.compare-stage.has-compare .compare-canvas {
+  display: block;
+}
+
+.compare-stage.has-compare .compare-overlay {
+  width: var(--compare-position);
+}
+
+/*
+  Direction fix:
+  - Original is placed as the base image.
+  - Output sits in the overlay and is revealed from the left based on slider position.
+  This makes the slider a true before/after wipe:
+  left side = Output revealed, right side = Original still visible.
+  Labels clarify which side is being inspected.
+*/
+.compare-side-label {
+  position: absolute;
+  z-index: 3;
+  top: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.compare-label-original {
+  right: 0.75rem;
+}
+
+.compare-label-output {
+  left: 0.75rem;
+}
+
+.compare-stage:not(.has-compare) .compare-side-label {
+  display: none;
+}
+
+.compare-empty[hidden] {
+  display: none !important;
+}
