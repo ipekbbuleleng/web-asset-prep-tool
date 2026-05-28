@@ -1,7 +1,7 @@
 {
   "name": "Web Asset Prep Tool",
   "short_name": "Asset Prep",
-  "description": "Portal PWA lokal untuk image/vector, SVG tracing, video/animation, dan document/office asset prep.",
+  "description": "Portal PWA lokal untuk image/vector, SVG tracing, video/animation, dan document/office asset prep. v1-R5-R1 tracer UX polish.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

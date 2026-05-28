@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Raster to SVG Tracer — Web Asset Prep Tool v1-R5</title>
+  <title>Raster to SVG Tracer — Web Asset Prep Tool v1-R5-R1</title>
   <meta name="description" content="Modul eksperimental untuk tracing JPG/PNG/WebP sederhana menjadi SVG path/vector.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -69,13 +69,13 @@
           <input id="outputNameInput" type="text" placeholder="contoh: logo-vector">
         </label>
 
-        <label>
+        <label class="quality-field">
           Lebar tracing
-          <div class="inline-control">
-            <input id="traceWidthInput" type="number" min="64" max="1024" step="1" value="256">
-            <span>px</span>
+          <div class="range-row wide-range-row">
+            <input id="traceWidthInput" type="range" min="64" max="1024" step="16" value="256">
+            <output id="traceWidthOutput">256 px</output>
           </div>
-          <small class="field-help">Semakin besar semakin detail, tetapi SVG bisa membesar dan berat.</small>
+          <small class="field-help">Geser ke kiri/kanan. Semakin besar semakin detail, tetapi SVG bisa membesar dan berat.</small>
         </label>
 
         <label class="quality-field">

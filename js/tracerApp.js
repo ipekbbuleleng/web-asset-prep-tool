@@ -19,7 +19,7 @@ import {
   svgTextToObjectUrl
 } from "./rasterTracer.js";
 
-const APP_VERSION = "1.0.5-raster-tracer";
+const APP_VERSION = "1.0.5-r1-tracer-width-slider";
 
 const state = {
   file: null,
@@ -39,6 +39,7 @@ const els = {
   fileInfo: document.querySelector("#tracerFileInfo"),
   outputNameInput: document.querySelector("#outputNameInput"),
   traceWidthInput: document.querySelector("#traceWidthInput"),
+  traceWidthOutput: document.querySelector("#traceWidthOutput"),
   thresholdInput: document.querySelector("#thresholdInput"),
   thresholdOutput: document.querySelector("#thresholdOutput"),
   fillColorInput: document.querySelector("#fillColorInput"),
@@ -64,6 +65,7 @@ function boot() {
   bindEvents();
   registerServiceWorker();
   updateThresholdLabel();
+  updateTraceWidthLabel();
   console.info(`Raster Tracer v${APP_VERSION} aktif`);
 }
 
@@ -93,6 +95,7 @@ function bindEvents() {
   });
 
   els.thresholdInput.addEventListener("input", updateThresholdLabel);
+  els.traceWidthInput.addEventListener("input", updateTraceWidthLabel);
   els.traceBtn.addEventListener("click", traceCurrentFile);
   els.downloadBtn.addEventListener("click", downloadCurrentSvg);
   els.copyBtn.addEventListener("click", copyCurrentSnippet);
@@ -338,12 +341,21 @@ function resetApp() {
   els.traceBtn.disabled = true;
   els.progressText.textContent = "";
   updateThresholdLabel();
+  updateTraceWidthLabel();
 }
 
 function releaseUrl(key) {
   if (state[key]) {
     URL.revokeObjectURL(state[key]);
     state[key] = "";
+  }
+}
+
+function updateTraceWidthLabel() {
+  const value = els.traceWidthInput.value;
+  if (els.traceWidthOutput) {
+    els.traceWidthOutput.value = `${value} px`;
+    els.traceWidthOutput.textContent = `${value} px`;
   }
 }
 

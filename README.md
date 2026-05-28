@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5 — Raster to SVG Tracer Eksperimental
+# Web Asset Prep Tool v1-R5-R1 — Raster Tracer Width Slider UX
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -223,3 +223,25 @@ Catatan teknis:
 - Semakin besar `Lebar tracing`, semakin detail hasilnya, tetapi file SVG bisa menjadi besar dan berat.
 - Jika laporan menunjukkan path segment terlalu banyak, gunakan WebP/JPG/PNG dari Image Tool.
 - Ini adalah tracer eksperimental berbasis browser, bukan pengganti vectorizer profesional.
+
+
+## Perbaikan v1-R5-R1 — Trace Width Slider UX
+
+Paket ini memoles modul Raster to SVG Tracer berdasarkan hasil uji awal.
+
+Perbaikan:
+- Kontrol `Lebar tracing` diubah dari input angka menjadi slider.
+- Angka lebar tracing tampil langsung di sisi kanan slider.
+- Slider memakai rentang:
+  ```text
+  64 px sampai 1024 px
+  step 16 px
+  default 256 px
+  ```
+- Service worker cache version dinaikkan.
+
+Catatan:
+- Lebar tracing besar menghasilkan SVG lebih detail, tetapi path segment dan ukuran file bisa membesar.
+- Untuk ikon/logo sederhana, mulai dari 256 px atau 384 px.
+- Untuk logo yang lebih besar, 512 px sering cukup.
+- 1024 px hanya untuk uji detail, bukan default yang disarankan.

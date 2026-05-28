@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-raster-tracer";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-r1-tracer-width-slider";
 const APP_SHELL = [
   "./",
   "./index.html",

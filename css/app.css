@@ -583,3 +583,11 @@ input[type="range"] { padding: 0; accent-color: var(--brand); }
   line-height: 1.65;
   margin-bottom: 0;
 }
+
+
+.wide-range-row {
+  grid-template-columns: 1fr 5rem;
+}
+.wide-range-row output {
+  font-weight: 800;
+}
