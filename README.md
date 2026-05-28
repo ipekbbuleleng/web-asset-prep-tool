@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3 — Image Background Remover Ringan
+# Web Asset Prep Tool v1-R5-R3-R1 — Background Remover Reprocess & Reset Setting Fix
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -318,3 +318,19 @@ Tidak cocok untuk:
 Catatan:
 - Ini bukan AI background remover.
 - Untuk objek kompleks, gunakan tool desain khusus atau backend/AI module pada versi lanjutan.
+
+
+## Perbaikan v1-R5-R3-R1 — Background Remover Reprocess & Reset Setting Fix
+
+Paket ini memperbaiki dua catatan hasil uji v1-R5-R3.
+
+Perbaikan:
+- File yang sudah selesai diproses sekarang bisa diproses ulang setelah nilai tolerance, edge softness, output format, width, quality, atau opsi lain diubah.
+- Tombol `Reset` pada Image Tool diubah menjadi `Reset setting`.
+- `Reset setting` tidak lagi menghapus file yang sudah diupload.
+- Reset hanya mengembalikan nilai setting ke default, membersihkan output/laporan/snippet, dan mempertahankan file original.
+- File bisa diproses ulang tanpa perlu upload ulang.
+
+Catatan:
+- Untuk mengganti file, pilih/upload file baru dari area upload.
+- Saat background remover aktif dan output JPG dipilih, sistem tetap memaksa output PNG agar transparansi tidak hilang.

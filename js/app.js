@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.5-r3-bg-remover";
+const APP_VERSION = "1.0.5-r3-r1-bg-reprocess-reset";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -313,8 +313,8 @@ function computeSingleSuggestedBaseName() {
 }
 
 async function processBatch() {
-  const readyItems = state.items.filter((item) => item.status === "ready");
-  if (readyItems.length === 0) {
+  const processableItems = state.items.filter((item) => item.status === "ready" || item.status === "done");
+  if (processableItems.length === 0) {
     showToast("Tidak ada file valid untuk diproses.");
     return;
   }
@@ -325,6 +325,8 @@ async function processBatch() {
   els.processBtn.textContent = "Memproses...";
   els.progressText.textContent = "Memulai proses batch...";
   clearOutputOnly();
+
+  const readyItems = state.items.filter((item) => item.status === "ready");
 
   const mimeType = getEffectiveOutputMimeType();
   const ext = getOutputExtension(mimeType);
@@ -626,12 +628,36 @@ function clearAll() {
 }
 
 function resetApp() {
+  if (state.items.length > 0) {
+    resetSettingsKeepFiles();
+    return;
+  }
+
   clearAll();
   els.fileInput.value = "";
   els.fileInfo.className = "file-info empty";
   els.fileInfo.textContent = "Belum ada file dipilih.";
   els.processBtn.disabled = true;
   els.progressText.textContent = "";
+  resetSettingsValues();
+}
+
+function resetSettingsKeepFiles() {
+  clearOutputOnly();
+  resetSettingsValues();
+  updateFileInfo();
+  updateOriginalPreview();
+  updateOutputNameSuggestion(true);
+
+  const processableItems = state.items.filter((item) => item.status === "ready" || item.status === "done");
+  els.processBtn.disabled = processableItems.length === 0;
+  els.progressText.textContent = processableItems.length > 0
+    ? "Setting dikembalikan. File upload tetap dipertahankan dan siap diproses ulang."
+    : "Setting dikembalikan.";
+  showToast("Setting direset. File upload tetap dipertahankan.");
+}
+
+function resetSettingsValues() {
   els.outputNameInput.value = "";
   els.altInput.value = "";
   els.presetSelect.value = "custom";
@@ -647,6 +673,7 @@ function resetApp() {
   if (els.bgFeatherInput) els.bgFeatherInput.value = 12;
   els.responsiveWidthsInput.value = "480, 800, 1200";
   els.sizesInput.value = "(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px";
+  state.outputNameTouched = false;
   syncResponsiveControls();
   syncBackgroundControls();
   updateQualityLabel();
