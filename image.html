@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R3-R3</title>
+  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4</title>
   <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -238,6 +238,37 @@
           <span id="outputEmpty">Hasil akan tampil setelah diproses.</span>
         </div>
       </article>
+    </section>
+
+    <section class="panel compare-panel" aria-labelledby="compare-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="compare-title">4B. Compare before/after</h2>
+          <p>Geser slider untuk membandingkan preview original dan hasil hapus background/optimasi. Cocok untuk cek visual sebelum download.</p>
+        </div>
+      </div>
+
+      <div class="compare-toolbar">
+        <label class="compare-range-label" for="compareSlider">
+          Posisi compare
+          <div class="range-row wide-range-row">
+            <input id="compareSlider" type="range" min="0" max="100" step="1" value="50">
+            <output id="comparePercent">50%</output>
+          </div>
+        </label>
+        <p class="compare-help">Kiri: original · kanan: output. Jika output belum ada, area compare akan tetap kosong.</p>
+      </div>
+
+      <div id="compareStage" class="compare-stage">
+        <div class="compare-canvas">
+          <img id="compareOriginal" class="compare-image base" alt="Compare original">
+          <div class="compare-overlay">
+            <img id="compareOutput" class="compare-image overlay" alt="Compare output">
+          </div>
+          <div class="compare-divider" aria-hidden="true"></div>
+        </div>
+        <div id="compareEmpty" class="compare-empty">Upload gambar lalu proses output agar compare before/after muncul di sini.</div>
+      </div>
     </section>
 
     <section class="panel report-panel" aria-labelledby="report-title">

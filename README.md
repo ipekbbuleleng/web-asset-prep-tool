@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R3 — Connected Area Background Remover
+# Web Asset Prep Tool v1-R5-R3-R4 — Connected Area Background Remover
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -336,7 +336,7 @@ Catatan:
 - Saat background remover aktif dan output JPG dipilih, sistem tetap memaksa output PNG agar transparansi tidak hilang.
 
 
-## Perbaikan v1-R5-R3-R3 — Connected Area Background Remover
+## Perbaikan v1-R5-R3-R4 — Connected Area Background Remover
 
 Paket ini memperbaiki kasus ketika warna background yang dipilih juga muncul di objek utama.
 

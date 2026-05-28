@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.5-r3-r3-bg-connected-area";
+const APP_VERSION = "1.0.6-r5-r3-r4-bg-compare-export";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -78,6 +78,12 @@ const els = {
   bgFeatherInput: document.querySelector("#bgFeatherInput"),
   bgFeatherOutput: document.querySelector("#bgFeatherOutput"),
   bgSafetyBox: document.querySelector("#bgSafetyBox"),
+  compareStage: document.querySelector("#compareStage"),
+  compareOriginal: document.querySelector("#compareOriginal"),
+  compareOutput: document.querySelector("#compareOutput"),
+  compareSlider: document.querySelector("#compareSlider"),
+  comparePercent: document.querySelector("#comparePercent"),
+  compareEmpty: document.querySelector("#compareEmpty"),
   processBtn: document.querySelector("#processBtn"),
   downloadBtn: document.querySelector("#downloadBtn"),
   resetBtn: document.querySelector("#resetBtn"),
@@ -101,6 +107,8 @@ function boot() {
   syncResponsiveControls();
   syncBackgroundControls();
   updateBackgroundLabels();
+  updateCompareSlider();
+  updateCompareView();
   console.info(`Web Asset Prep Tool v${APP_VERSION} aktif`);
 }
 
@@ -182,6 +190,7 @@ function bindEvents() {
 
   els.bgPickFromImageBtn?.addEventListener("click", toggleBackgroundColorPicker);
   els.originalPreview?.addEventListener("click", handleOriginalPreviewColorPick);
+  els.compareSlider?.addEventListener("input", updateCompareSlider);
 }
 
 
@@ -277,6 +286,7 @@ function updateOriginalPreview() {
   els.originalPreview.parentElement.classList.add("has-image");
   els.originalPreviewLabel.textContent = `${firstReady.file.name} · ${firstReady.meta.width} × ${firstReady.meta.height}px`;
   updateBackgroundPickerUi();
+  updateCompareView();
 }
 
 function toggleBackgroundColorPicker() {
@@ -302,6 +312,7 @@ function toggleBackgroundColorPicker() {
 function setBackgroundPickerArmed(value) {
   state.bgColorPickerArmed = !!value;
   updateBackgroundPickerUi();
+  updateCompareView();
 }
 
 function updateBackgroundPickerUi() {
@@ -373,6 +384,38 @@ function handleOriginalPreviewColorPick(event) {
 
 function rgbToHex(r, g, b) {
   return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function updateCompareSlider() {
+  if (!els.compareSlider || !els.comparePercent || !els.compareStage) return;
+  const value = Math.max(0, Math.min(100, Number(els.compareSlider.value || 50)));
+  els.comparePercent.value = `${value}%`;
+  els.comparePercent.textContent = `${value}%`;
+  els.compareStage.style.setProperty("--compare-position", `${value}%`);
+}
+
+function updateCompareView() {
+  if (!els.compareOriginal || !els.compareOutput || !els.compareStage || !els.compareEmpty) return;
+
+  const originalSrc = els.originalPreview?.getAttribute("src") || "";
+  const outputSrc = els.outputPreview?.getAttribute("src") || "";
+  const hasCompare = !!(originalSrc && outputSrc);
+
+  if (originalSrc) {
+    els.compareOriginal.src = originalSrc;
+  } else {
+    els.compareOriginal.removeAttribute("src");
+  }
+
+  if (outputSrc) {
+    els.compareOutput.src = outputSrc;
+  } else {
+    els.compareOutput.removeAttribute("src");
+  }
+
+  els.compareStage.classList.toggle("has-compare", hasCompare);
+  els.compareEmpty.hidden = hasCompare;
+  updateCompareSlider();
 }
 
 function applyPreset() {
@@ -548,6 +591,7 @@ function updateOutputPreview() {
   els.outputPreview.src = state.outputPreviewUrl;
   els.outputPreview.parentElement.classList.add("has-image");
   els.outputPreviewLabel.textContent = `Preview output terbesar: ${previewOutput.name} · ${previewOutput.width} × ${previewOutput.height}px`;
+  updateCompareView();
 }
 
 function renderReportAfterProcess() {
@@ -556,14 +600,14 @@ function renderReportAfterProcess() {
   if (state.items.length === 1 && doneItems.length === 1) {
     const item = doneItems[0];
     if (els.responsiveModeInput.checked) {
-      els.reportBox.innerHTML = renderResponsiveReport({ originalName: item.file.name, originalType: getReadableMimeLabel(item.file), originalSize: item.file.size, originalWidth: item.meta.width, originalHeight: item.meta.height, outputType: els.formatSelect.value, widthsText: parseWidths(els.responsiveWidthsInput.value).join(", "), outputs: item.outputs });
+      els.reportBox.innerHTML = renderResponsiveReport({ originalName: item.file.name, originalType: getReadableMimeLabel(item.file), originalSize: item.file.size, originalWidth: item.meta.width, originalHeight: item.meta.height, outputType: els.formatSelect.value, widthsText: parseWidths(els.responsiveWidthsInput.value).join(", "), outputs: item.outputs }) + renderExportPolishSummary({ item, outputs: item.outputs, mode: "responsive" });
       return;
     }
     const output = item.outputs[0];
-    els.reportBox.innerHTML = renderSingleReport({ originalName: item.file.name, outputName: output.name, originalType: getReadableMimeLabel(item.file), outputType: output.type, originalSize: item.file.size, outputSize: output.size, originalWidth: item.meta.width, originalHeight: item.meta.height, outputWidth: output.width, outputHeight: output.height }) + renderBackgroundRemovalDetails(output);
+    els.reportBox.innerHTML = renderSingleReport({ originalName: item.file.name, outputName: output.name, originalType: getReadableMimeLabel(item.file), outputType: output.type, originalSize: item.file.size, outputSize: output.size, originalWidth: item.meta.width, originalHeight: item.meta.height, outputWidth: output.width, outputHeight: output.height }) + renderBackgroundRemovalDetails(output) + renderExportPolishSummary({ item, outputs: item.outputs, mode: "single" });
     return;
   }
-  els.reportBox.innerHTML = renderBatchReport({ items: state.items, outputFiles: state.outputFiles, outputMode: els.responsiveModeInput.checked ? "Batch Responsive Image Generator" : "Batch Single Output" });
+  els.reportBox.innerHTML = renderBatchReport({ items: state.items, outputFiles: state.outputFiles, outputMode: els.responsiveModeInput.checked ? "Batch Responsive Image Generator" : "Batch Single Output" }) + renderExportPolishSummary({ item: null, outputs: state.outputFiles, mode: state.outputFiles.length > 1 ? "batch" : "single" });
 }
 
 async function downloadCurrentOutput() {
@@ -705,6 +749,7 @@ function clearOutputOnly() {
   els.outputPreview.removeAttribute("src");
   els.outputPreview.parentElement.classList.remove("has-image");
   els.outputPreviewLabel.textContent = "Hasil akan tampil setelah diproses.";
+  updateCompareView();
   els.reportBox.className = "report-box empty";
   els.reportBox.textContent = "Laporan belum tersedia.";
   els.snippetOutput.textContent = "<!-- Snippet akan muncul setelah gambar diproses -->";
@@ -728,6 +773,7 @@ function clearAll() {
   els.originalPreview.parentElement.classList.remove("has-image");
   els.outputPreviewLabel.textContent = "Hasil akan tampil setelah diproses.";
   els.originalPreviewLabel.textContent = "Preview file pertama.";
+  updateCompareView();
   els.reportBox.className = "report-box empty";
   els.reportBox.textContent = "Laporan belum tersedia.";
   els.snippetOutput.textContent = "<!-- Snippet akan muncul setelah gambar diproses -->";
@@ -841,6 +887,7 @@ function syncBackgroundControls() {
   updateBackgroundLabels();
   updateBackgroundSafetyBox();
   updateBackgroundPickerUi();
+  updateCompareView();
 }
 
 function updateBackgroundLabels() {
@@ -918,6 +965,38 @@ function renderBackgroundRemovalDetails(output) {
   `;
 }
 
+
+function renderExportPolishSummary({ item, outputs, mode }) {
+  const firstOutput = outputs?.[0] || null;
+  const transparentFriendly = ["image/png", "image/webp"].includes(firstOutput?.type || "");
+  const hasBackgroundRemoval = outputs?.some((output) => !!output.backgroundRemoval);
+  const snippetType = mode === "responsive" ? "<picture> + srcset" : "<img>";
+  const packageType = mode === "batch" || mode === "responsive" || (outputs?.length || 0) > 1
+    ? "ZIP rapi berisi assets/images, snippets, dan reports"
+    : "Single file langsung download";
+  const formatLabel = firstOutput?.type ? escapeHtml(firstOutput.type) : escapeHtml(getEffectiveOutputMimeType());
+  const useNote = hasBackgroundRemoval
+    ? (transparentFriendly
+      ? "Cocok untuk logo, ikon, stiker, dan aset transparan di web/PWA."
+      : "Background remover aktif. Sebaiknya pakai WebP atau PNG agar transparansi aman.")
+    : "Cocok untuk alur optimasi standar sebelum aset masuk repository web/PWA.";
+
+  return `
+    <h3>Ringkasan export</h3>
+    <table class="variant-table">
+      <tbody>
+        <tr><th>Bentuk download</th><td>${packageType}</td></tr>
+        <tr><th>Format utama</th><td>${formatLabel}</td></tr>
+        <tr><th>Snippet default</th><td><code>${escapeHtml(snippetType)}</code></td></tr>
+        <tr><th>Transparansi</th><td>${transparentFriendly ? '<span class="status-pill status-ready">Aman</span> WebP/PNG cocok untuk output transparan.' : '<span class="status-pill status-check">Standar</span> Tidak ditujukan untuk transparansi khusus.'}</td></tr>
+        <tr><th>Saran pemakaian</th><td>${useNote}</td></tr>
+      </tbody>
+    </table>
+    <div class="note-box">
+      Untuk final check, gunakan area <strong>Compare before/after</strong> di atas. Jika output dipakai di web, cukup salin snippet lalu unggah file hasil ke folder <code>assets/images</code>.
+    </div>
+  `;
+}
 
 function parseWidths(value) {
   const unique = Array.from(new Set(String(value || "").split(",").map((item) => Number(item.trim())).filter((item) => Number.isFinite(item) && item >= 64 && item <= 5000).map((item) => Math.round(item))));
