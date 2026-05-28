@@ -8,7 +8,7 @@ import {
 import {
   copyText,
   downloadBlob,
-  downloadMany,
+  downloadZip,
   sanitizeFileBaseName,
   stripExtension
 } from "./downloadHelper.js";
@@ -17,6 +17,7 @@ import {
   buildImgSnippet,
   buildPictureSnippet,
   formatBytes,
+  renderBatchReport,
   renderResponsiveReport,
   renderSingleReport
 } from "./reportHelper.js";
@@ -27,7 +28,8 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.2-r2-r1";
+const APP_VERSION = "1.0.3-batch";
+const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
   custom: null,
@@ -71,16 +73,10 @@ const PRESETS = {
 };
 
 const state = {
-  file: null,
-  processableFile: null,
-  isHeicInput: false,
-  heicNotice: "",
-  originalMeta: null,
-  originalObjectUrl: null,
-  outputBlob: null,
-  outputObjectUrl: null,
-  outputName: "",
-  responsiveOutputs: [],
+  items: [],
+  originalPreviewUrl: null,
+  outputPreviewUrl: null,
+  outputFiles: [],
   snippet: "",
   outputNameTouched: false
 };
@@ -89,6 +85,7 @@ const els = {
   fileInput: document.querySelector("#fileInput"),
   dropZone: document.querySelector("#dropZone"),
   fileInfo: document.querySelector("#fileInfo"),
+  batchList: document.querySelector("#batchList"),
   presetSelect: document.querySelector("#presetSelect"),
   outputNameInput: document.querySelector("#outputNameInput"),
   widthInput: document.querySelector("#widthInput"),
@@ -104,7 +101,9 @@ const els = {
   downloadBtn: document.querySelector("#downloadBtn"),
   resetBtn: document.querySelector("#resetBtn"),
   copySnippetBtn: document.querySelector("#copySnippetBtn"),
+  progressText: document.querySelector("#progressText"),
   originalPreview: document.querySelector("#originalPreview"),
+  originalPreviewLabel: document.querySelector("#originalPreviewLabel"),
   outputPreview: document.querySelector("#outputPreview"),
   outputPreviewLabel: document.querySelector("#outputPreviewLabel"),
   reportBox: document.querySelector("#reportBox"),
@@ -124,8 +123,7 @@ function boot() {
 
 function bindEvents() {
   els.fileInput.addEventListener("change", () => {
-    const [file] = els.fileInput.files || [];
-    if (file) handleFile(file);
+    handleFiles(Array.from(els.fileInput.files || []));
   });
 
   ["dragenter", "dragover"].forEach((eventName) => {
@@ -143,8 +141,7 @@ function bindEvents() {
   });
 
   els.dropZone.addEventListener("drop", (event) => {
-    const [file] = event.dataTransfer?.files || [];
-    if (file) handleFile(file);
+    handleFiles(Array.from(event.dataTransfer?.files || []));
   });
 
   els.presetSelect.addEventListener("change", () => {
@@ -153,7 +150,7 @@ function bindEvents() {
   });
 
   els.qualityInput.addEventListener("input", updateQualityLabel);
-  els.processBtn.addEventListener("click", processCurrentFile);
+  els.processBtn.addEventListener("click", processBatch);
   els.downloadBtn.addEventListener("click", downloadCurrentOutput);
   els.copySnippetBtn.addEventListener("click", copyCurrentSnippet);
   els.resetBtn.addEventListener("click", resetApp);
@@ -166,9 +163,7 @@ function bindEvents() {
 
   [els.widthInput, els.responsiveWidthsInput].forEach((element) => {
     element.addEventListener("input", () => {
-      if (!state.outputNameTouched) {
-        updateOutputNameSuggestion(false);
-      }
+      if (!state.outputNameTouched) updateOutputNameSuggestion(false);
     });
   });
 
@@ -177,65 +172,110 @@ function bindEvents() {
   });
 }
 
-async function handleFile(file) {
-  clearOutputOnly();
+async function handleFiles(files) {
+  clearAll();
+  const selected = files.slice(0, MAX_BATCH_FILES);
 
-  const isHeic = isHeicFile(file);
+  if (files.length > MAX_BATCH_FILES) {
+    showToast(`Maksimum ${MAX_BATCH_FILES} file per batch. File selebihnya diabaikan.`);
+  }
 
-  if (!isHeic && !isSupportedImage(file)) {
-    showToast("Format belum didukung. Gunakan JPG, PNG, WebP, HEIC, atau HEIF.");
+  if (selected.length === 0) return;
+
+  els.processBtn.disabled = true;
+  els.progressText.textContent = "Membaca file...";
+  showToast(`Membaca ${selected.length} file...`);
+
+  for (const file of selected) {
+    const item = createQueueItem(file);
+    state.items.push(item);
+    renderBatchList();
+
+    try {
+      await prepareItem(item);
+      item.status = "ready";
+    } catch (error) {
+      item.status = "error";
+      item.error = error.message || "Gagal membaca file.";
+    }
+
+    renderBatchList();
+    await yieldToBrowser();
+  }
+
+  const readyItems = state.items.filter((item) => item.status === "ready");
+  updateFileInfo();
+  updateOriginalPreview();
+  updateOutputNameSuggestion(true);
+
+  els.processBtn.disabled = readyItems.length === 0;
+  els.progressText.textContent = readyItems.length > 0
+    ? `${readyItems.length} file siap diproses.`
+    : "Tidak ada file valid.";
+  showToast(`${readyItems.length} file siap diproses.`);
+}
+
+function createQueueItem(file) {
+  return {
+    id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+    file,
+    processableFile: file,
+    isHeic: isHeicFile(file),
+    meta: null,
+    originalObjectUrl: null,
+    status: "reading",
+    error: "",
+    outputs: [],
+    snippet: ""
+  };
+}
+
+async function prepareItem(item) {
+  if (!item.isHeic && !isSupportedImage(item.file)) {
+    throw new Error("Format belum didukung.");
+  }
+
+  if (item.isHeic) {
+    item.processableFile = await convertHeicToJpegFile(item.file, { quality: 0.92 });
+  }
+
+  item.meta = await readImageMeta(item.processableFile);
+  item.originalObjectUrl = item.meta.objectUrl;
+}
+
+function updateFileInfo() {
+  const readyItems = state.items.filter((item) => item.status === "ready");
+  const errorItems = state.items.filter((item) => item.status === "error");
+  const totalSize = state.items.reduce((sum, item) => sum + item.file.size, 0);
+  const heicCount = state.items.filter((item) => item.isHeic).length;
+
+  els.fileInfo.classList.remove("empty");
+  els.fileInfo.innerHTML = `
+    <strong>${state.items.length} file dipilih</strong><br>
+    Siap: ${readyItems.length} · Gagal: ${errorItems.length} · HEIC/HEIF: ${heicCount} · Total asli: ${formatBytes(totalSize)}
+    ${heicCount ? "<br><small><strong>Catatan:</strong> HEIC/HEIF dikonversi dulu ke JPEG sementara di browser sebelum diproses.</small>" : ""}
+  `;
+}
+
+function updateOriginalPreview() {
+  const firstReady = state.items.find((item) => item.status === "ready" && item.originalObjectUrl);
+
+  if (!firstReady) {
+    els.originalPreview.removeAttribute("src");
+    els.originalPreview.parentElement.classList.remove("has-image");
+    els.originalPreviewLabel.textContent = "Preview file pertama.";
     return;
   }
 
-  try {
-    releaseObjectUrl("originalObjectUrl");
-    state.file = file;
-    state.processableFile = file;
-    state.isHeicInput = isHeic;
-    state.heicNotice = "";
-    state.outputNameTouched = false;
-
-    if (isHeic) {
-      showToast("Membaca HEIC/HEIF. Proses awal bisa lebih lama...");
-      state.processableFile = await convertHeicToJpegFile(file, { quality: 0.92 });
-      state.heicNotice = "HEIC/HEIF dikonversi dulu ke JPEG sementara di browser, lalu diproses menjadi output yang dipilih.";
-    }
-
-    state.originalMeta = await readImageMeta(state.processableFile);
-    state.originalObjectUrl = state.originalMeta.objectUrl;
-
-    els.originalPreview.src = state.originalObjectUrl;
-    els.originalPreview.parentElement.classList.add("has-image");
-
-    const heicBadge = isHeic
-      ? `<br><small><strong>Catatan:</strong> ${escapeHtml(state.heicNotice)}</small>`
-      : "";
-
-    els.fileInfo.classList.remove("empty");
-    els.fileInfo.innerHTML = `
-      <strong>${escapeHtml(file.name)}</strong><br>
-      ${escapeHtml(getReadableMimeLabel(file))} · ${formatBytes(file.size)} ·
-      ${state.originalMeta.width} × ${state.originalMeta.height}px
-      ${heicBadge}
-    `;
-
-    updateOutputNameSuggestion(true);
-
-    if (!Number(els.widthInput.value)) {
-      els.widthInput.value = Math.min(1200, state.originalMeta.width);
-    }
-
-    els.processBtn.disabled = false;
-    showToast(isHeic ? "HEIC/HEIF berhasil dibaca." : "Gambar berhasil dibaca.");
-  } catch (error) {
-    console.error(error);
-    showToast(error.message || "Gagal membaca gambar.");
-    resetApp();
-  }
+  state.originalPreviewUrl = firstReady.originalObjectUrl;
+  els.originalPreview.src = firstReady.originalObjectUrl;
+  els.originalPreview.parentElement.classList.add("has-image");
+  els.originalPreviewLabel.textContent = `${firstReady.file.name} · ${firstReady.meta.width} × ${firstReady.meta.height}px`;
 }
 
 function applyPreset() {
   const preset = PRESETS[els.presetSelect.value];
+
   if (!preset) {
     updateOutputNameSuggestion(true);
     return;
@@ -246,13 +286,8 @@ function applyPreset() {
   els.formatSelect.value = preset.mimeType;
   els.responsiveModeInput.checked = !!preset.responsiveMode;
 
-  if (preset.widths) {
-    els.responsiveWidthsInput.value = preset.widths;
-  }
-
-  if (preset.sizes) {
-    els.sizesInput.value = preset.sizes;
-  }
+  if (preset.widths) els.responsiveWidthsInput.value = preset.widths;
+  if (preset.sizes) els.sizesInput.value = preset.sizes;
 
   updateQualityLabel();
   syncResponsiveControls();
@@ -270,24 +305,21 @@ function getCurrentPreset() {
   return PRESETS[els.presetSelect.value] || null;
 }
 
-function computeSuggestedBaseName() {
-  const fileBase = sanitizeFileBaseName(stripExtension(state.file?.name || "asset"));
+function getDefaultSuffix() {
   const preset = getCurrentPreset();
 
-  if (preset?.suffix) {
-    return `${fileBase}-${preset.suffix}`;
-  }
-
-  if (els.responsiveModeInput.checked) {
-    return `${fileBase}-responsive`;
-  }
+  if (preset?.suffix) return preset.suffix;
+  if (els.responsiveModeInput.checked) return "responsive";
 
   const width = Number(els.widthInput.value) || 1200;
-  return `${fileBase}-${width}`;
+  return `${width}`;
 }
 
 function updateOutputNameSuggestion(force = false) {
-  const suggestion = computeSuggestedBaseName();
+  const suggestion = state.items.length > 1
+    ? getDefaultSuffix()
+    : computeSingleSuggestedBaseName();
+
   els.outputNameInput.placeholder = suggestion;
 
   if (force || !els.outputNameInput.value.trim() || !state.outputNameTouched) {
@@ -295,155 +327,245 @@ function updateOutputNameSuggestion(force = false) {
   }
 }
 
-async function processCurrentFile() {
-  if (!state.file) {
-    showToast("Pilih file terlebih dahulu.");
+function computeSingleSuggestedBaseName() {
+  const first = state.items[0];
+  const fileBase = sanitizeFileBaseName(stripExtension(first?.file?.name || "asset"));
+  const suffix = getDefaultSuffix();
+
+  return `${fileBase}-${suffix}`;
+}
+
+async function processBatch() {
+  const readyItems = state.items.filter((item) => item.status === "ready");
+
+  if (readyItems.length === 0) {
+    showToast("Tidak ada file valid untuk diproses.");
     return;
   }
 
   els.processBtn.disabled = true;
+  els.downloadBtn.disabled = true;
+  els.copySnippetBtn.disabled = true;
   els.processBtn.textContent = "Memproses...";
+  els.progressText.textContent = "Memulai proses batch...";
+  clearOutputOnly();
 
-  try {
-    const processingSource = state.processableFile || state.file;
-    const mimeType = els.formatSelect.value;
-    const ext = getOutputExtension(mimeType);
-    const responsiveMode = els.responsiveModeInput.checked;
-    const baseName = sanitizeFileBaseName(
-      els.outputNameInput.value.trim() || computeSuggestedBaseName()
-    );
+  const mimeType = els.formatSelect.value;
+  const ext = getOutputExtension(mimeType);
+  const responsiveMode = els.responsiveModeInput.checked;
+  const widths = responsiveMode ? parseWidths(els.responsiveWidthsInput.value) : [];
 
-    if (responsiveMode) {
-      const widths = parseWidths(els.responsiveWidthsInput.value);
+  if (responsiveMode && widths.length === 0) {
+    showToast("Isi daftar width responsive terlebih dahulu.");
+    els.processBtn.disabled = false;
+    els.processBtn.textContent = "Proses gambar";
+    return;
+  }
 
-      if (widths.length === 0) {
-        throw new Error("Isi daftar width responsive terlebih dahulu.");
-      }
+  const usedNames = new Set();
+  const snippets = [];
 
-      const outputs = [];
+  for (let index = 0; index < readyItems.length; index += 1) {
+    const item = readyItems[index];
+    item.status = "processing";
+    item.error = "";
+    item.outputs = [];
+    item.snippet = "";
+    renderBatchList();
 
-      for (const width of widths) {
-        const result = await processImageFile(processingSource, {
-          width,
+    els.progressText.textContent = `Memproses ${index + 1}/${readyItems.length}: ${item.file.name}`;
+
+    try {
+      const baseName = getBaseNameForItem(item, readyItems.length > 1);
+
+      if (responsiveMode) {
+        for (const width of widths) {
+          const result = await processImageFile(item.processableFile, {
+            width,
+            quality: Number(els.qualityInput.value),
+            mimeType,
+            preventUpscale: els.preventUpscaleInput.checked
+          });
+
+          const filename = makeUniqueFilename(`${baseName}-${result.outputMeta.width}.${ext}`, usedNames);
+          const output = createOutputRecord(result, filename, item);
+          item.outputs.push(output);
+          state.outputFiles.push(output);
+          await yieldToBrowser();
+        }
+
+        item.snippet = buildPictureSnippet({
+          outputs: item.outputs,
+          alt: getAltTextForItem(item),
+          sizes: els.sizesInput.value,
+          mimeType
+        });
+      } else {
+        const result = await processImageFile(item.processableFile, {
+          width: Number(els.widthInput.value),
           quality: Number(els.qualityInput.value),
           mimeType,
           preventUpscale: els.preventUpscaleInput.checked
         });
 
-        const outputWidth = result.outputMeta.width;
-        const filename = `${baseName}-${outputWidth}.${ext}`;
-        const objectUrl = URL.createObjectURL(result.blob);
+        const filename = makeUniqueFilename(`${baseName}.${ext}`, usedNames);
+        const output = createOutputRecord(result, filename, item);
+        item.outputs.push(output);
+        state.outputFiles.push(output);
 
-        outputs.push({
-          blob: result.blob,
-          name: filename,
+        item.snippet = buildImgSnippet({
+          filename,
+          alt: getAltTextForItem(item),
           width: result.outputMeta.width,
-          height: result.outputMeta.height,
-          size: result.outputMeta.size,
-          type: result.outputMeta.type,
-          objectUrl
+          height: result.outputMeta.height
         });
       }
 
-      clearOutputOnly();
-      state.responsiveOutputs = outputs;
-
-      const previewVariant = [...outputs].sort((a, b) => b.width - a.width)[0];
-      els.outputPreview.src = previewVariant.objectUrl;
-      els.outputPreview.parentElement.classList.add("has-image");
-      els.outputPreviewLabel.textContent = `Preview varian terbesar: ${previewVariant.width} × ${previewVariant.height}px`;
-
-      state.snippet = buildPictureSnippet({
-        outputs,
-        alt: els.altInput.value,
-        sizes: els.sizesInput.value,
-        mimeType
-      });
-
-      els.reportBox.classList.remove("empty");
-      els.reportBox.innerHTML = renderResponsiveReport({
-        originalName: state.file.name,
-        originalType: getReadableMimeLabel(state.file),
-        originalSize: state.file.size,
-        originalWidth: state.originalMeta.width,
-        originalHeight: state.originalMeta.height,
-        outputType: mimeType,
-        widthsText: widths.join(", "),
-        outputs
-      });
-
-      els.snippetOutput.textContent = state.snippet;
-      els.downloadBtn.disabled = false;
-      els.copySnippetBtn.disabled = false;
-      showToast(`Selesai: ${outputs.length} varian responsive dibuat.`);
-      return;
+      item.status = "done";
+      snippets.push(`<!-- ${item.file.name} -->\n${item.snippet}`);
+      renderBatchList();
+    } catch (error) {
+      item.status = "error";
+      item.error = error.message || "Gagal memproses file.";
+      renderBatchList();
     }
 
-    const result = await processImageFile(processingSource, {
-      width: Number(els.widthInput.value),
-      quality: Number(els.qualityInput.value),
-      mimeType,
-      preventUpscale: els.preventUpscaleInput.checked
-    });
-
-    clearOutputOnly();
-
-    const outputName = `${baseName}.${ext}`;
-    state.outputBlob = result.blob;
-    state.outputObjectUrl = URL.createObjectURL(result.blob);
-    state.outputName = outputName;
-    state.snippet = buildImgSnippet({
-      filename: outputName,
-      alt: els.altInput.value,
-      width: result.outputMeta.width,
-      height: result.outputMeta.height
-    });
-
-    els.outputPreview.src = state.outputObjectUrl;
-    els.outputPreview.parentElement.classList.add("has-image");
-    els.outputPreviewLabel.textContent = `Preview output: ${result.outputMeta.width} × ${result.outputMeta.height}px`;
-
-    els.reportBox.classList.remove("empty");
-    els.reportBox.innerHTML = renderSingleReport({
-      originalName: state.file.name,
-      outputName,
-      originalType: getReadableMimeLabel(state.file),
-      outputType: result.outputMeta.type,
-      originalSize: state.file.size,
-      outputSize: result.outputMeta.size,
-      originalWidth: result.sourceMeta.width,
-      originalHeight: result.sourceMeta.height,
-      outputWidth: result.outputMeta.width,
-      outputHeight: result.outputMeta.height
-    });
-
-    els.snippetOutput.textContent = state.snippet;
-    els.downloadBtn.disabled = false;
-    els.copySnippetBtn.disabled = false;
-    showToast(`Selesai: ${outputName}`);
-  } catch (error) {
-    console.error(error);
-    showToast(error.message || "Gagal memproses gambar.");
-  } finally {
-    els.processBtn.disabled = false;
-    els.processBtn.textContent = "Proses gambar";
+    await yieldToBrowser();
   }
+
+  state.snippet = snippets.join("\n\n");
+
+  updateOutputPreview();
+  renderReportAfterProcess();
+  els.snippetOutput.textContent = state.snippet || "<!-- Tidak ada snippet karena semua file gagal diproses -->";
+
+  const successCount = readyItems.filter((item) => item.status === "done").length;
+  els.downloadBtn.disabled = state.outputFiles.length === 0;
+  els.copySnippetBtn.disabled = !state.snippet;
+  els.processBtn.disabled = false;
+  els.processBtn.textContent = "Proses gambar";
+  els.progressText.textContent = `Selesai: ${successCount}/${readyItems.length} file berhasil.`;
+  showToast(`Batch selesai: ${state.outputFiles.length} file output dibuat.`);
 }
 
-function downloadCurrentOutput() {
-  if (state.responsiveOutputs.length > 0) {
-    downloadMany(state.responsiveOutputs);
-    showToast("Mengunduh semua varian responsive...");
+function createOutputRecord(result, filename, item) {
+  return {
+    blob: result.blob,
+    name: filename,
+    size: result.outputMeta.size,
+    type: result.outputMeta.type,
+    width: result.outputMeta.width,
+    height: result.outputMeta.height,
+    sourceName: item.file.name,
+    originalSize: item.file.size
+  };
+}
+
+function getBaseNameForItem(item, isBatch) {
+  const fileBase = sanitizeFileBaseName(stripExtension(item.file.name));
+  const inputValue = sanitizeFileBaseName(els.outputNameInput.value.trim() || getDefaultSuffix());
+
+  if (isBatch) {
+    return `${fileBase}-${inputValue}`;
+  }
+
+  return inputValue || `${fileBase}-${getDefaultSuffix()}`;
+}
+
+function getAltTextForItem(item) {
+  const baseAlt = els.altInput.value.trim();
+
+  if (state.items.length <= 1) {
+    return baseAlt || "Deskripsi gambar";
+  }
+
+  const fileLabel = stripExtension(item.file.name)
+    .replace(/[-_]+/g, " ")
+    .trim();
+
+  return baseAlt ? `${baseAlt} - ${fileLabel}` : fileLabel || "Deskripsi gambar";
+}
+
+function updateOutputPreview() {
+  releaseOutputPreview();
+
+  const previewOutput = [...state.outputFiles].sort((a, b) => b.width - a.width)[0];
+
+  if (!previewOutput) {
+    els.outputPreview.removeAttribute("src");
+    els.outputPreview.parentElement.classList.remove("has-image");
+    els.outputPreviewLabel.textContent = "Tidak ada output.";
     return;
   }
 
-  if (!state.outputBlob || !state.outputName) {
+  state.outputPreviewUrl = URL.createObjectURL(previewOutput.blob);
+  els.outputPreview.src = state.outputPreviewUrl;
+  els.outputPreview.parentElement.classList.add("has-image");
+  els.outputPreviewLabel.textContent = `Preview output terbesar: ${previewOutput.name} · ${previewOutput.width} × ${previewOutput.height}px`;
+}
+
+function renderReportAfterProcess() {
+  els.reportBox.classList.remove("empty");
+
+  const doneItems = state.items.filter((item) => item.status === "done");
+
+  if (state.items.length === 1 && doneItems.length === 1) {
+    const item = doneItems[0];
+
+    if (els.responsiveModeInput.checked) {
+      els.reportBox.innerHTML = renderResponsiveReport({
+        originalName: item.file.name,
+        originalType: getReadableMimeLabel(item.file),
+        originalSize: item.file.size,
+        originalWidth: item.meta.width,
+        originalHeight: item.meta.height,
+        outputType: els.formatSelect.value,
+        widthsText: parseWidths(els.responsiveWidthsInput.value).join(", "),
+        outputs: item.outputs
+      });
+      return;
+    }
+
+    const output = item.outputs[0];
+    els.reportBox.innerHTML = renderSingleReport({
+      originalName: item.file.name,
+      outputName: output.name,
+      originalType: getReadableMimeLabel(item.file),
+      outputType: output.type,
+      originalSize: item.file.size,
+      outputSize: output.size,
+      originalWidth: item.meta.width,
+      originalHeight: item.meta.height,
+      outputWidth: output.width,
+      outputHeight: output.height
+    });
+    return;
+  }
+
+  els.reportBox.innerHTML = renderBatchReport({
+    items: state.items,
+    outputFiles: state.outputFiles,
+    outputMode: els.responsiveModeInput.checked ? "Batch Responsive Image Generator" : "Batch Single Output"
+  });
+}
+
+async function downloadCurrentOutput() {
+  if (state.outputFiles.length === 0) {
     showToast("Belum ada output untuk didownload.");
     return;
   }
 
-  downloadBlob(state.outputBlob, state.outputName);
-  showToast("Download dimulai.");
+  if (state.outputFiles.length === 1) {
+    downloadBlob(state.outputFiles[0].blob, state.outputFiles[0].name);
+    showToast("Download dimulai.");
+    return;
+  }
+
+  const zipName = `web-assets-${formatTimestampForName(new Date())}.zip`;
+  els.progressText.textContent = "Membuat ZIP...";
+  await downloadZip(state.outputFiles, zipName);
+  els.progressText.textContent = `ZIP siap: ${zipName}`;
+  showToast("Download ZIP dimulai.");
 }
 
 async function copyCurrentSnippet() {
@@ -456,25 +578,66 @@ async function copyCurrentSnippet() {
   showToast("Snippet berhasil disalin.");
 }
 
-function updateQualityLabel() {
-  els.qualityOutput.value = els.qualityInput.value;
-  els.qualityOutput.textContent = els.qualityInput.value;
+function renderBatchList() {
+  if (state.items.length === 0) {
+    els.batchList.className = "batch-list empty";
+    els.batchList.textContent = "Daftar batch akan muncul setelah file dipilih.";
+    return;
+  }
+
+  els.batchList.className = "batch-list";
+  els.batchList.innerHTML = `
+    <table class="batch-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>File</th>
+          <th>Format</th>
+          <th>Ukuran asli</th>
+          <th>Dimensi</th>
+          <th>Output</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${state.items.map((item, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(item.file.name)}</td>
+            <td>${escapeHtml(getReadableMimeLabel(item.file))}</td>
+            <td>${formatBytes(item.file.size)}</td>
+            <td>${item.meta ? `${item.meta.width} × ${item.meta.height}px` : "-"}</td>
+            <td>${item.outputs.length ? `${item.outputs.length} file · ${formatBytes(item.outputs.reduce((sum, output) => sum + output.size, 0))}` : "-"}</td>
+            <td>${renderItemStatus(item)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderItemStatus(item) {
+  if (item.status === "reading") return `<span class="status-pill status-check">Membaca</span>`;
+  if (item.status === "ready") return `<span class="status-pill status-neutral">Siap</span>`;
+  if (item.status === "processing") return `<span class="status-pill status-check">Proses</span>`;
+  if (item.status === "done") return `<span class="status-pill status-ready">Selesai</span>`;
+  if (item.status === "error") return `<span class="status-pill status-risk">Gagal</span><br><small>${escapeHtml(item.error || "")}</small>`;
+  return "-";
 }
 
 function clearOutputOnly() {
-  releaseObjectUrl("outputObjectUrl");
+  releaseOutputPreview();
 
-  if (state.responsiveOutputs.length > 0) {
-    state.responsiveOutputs.forEach((item) => {
-      if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
-    });
-  }
-
-  state.outputBlob = null;
-  state.outputObjectUrl = null;
-  state.outputName = "";
-  state.responsiveOutputs = [];
+  state.outputFiles = [];
   state.snippet = "";
+
+  state.items.forEach((item) => {
+    item.outputs = [];
+    item.snippet = "";
+    if (item.status === "done" || item.status === "processing") {
+      item.status = "ready";
+    }
+  });
 
   els.outputPreview.removeAttribute("src");
   els.outputPreview.parentElement.classList.remove("has-image");
@@ -484,25 +647,40 @@ function clearOutputOnly() {
   els.snippetOutput.textContent = "<!-- Snippet akan muncul setelah gambar diproses -->";
   els.downloadBtn.disabled = true;
   els.copySnippetBtn.disabled = true;
+  renderBatchList();
+}
+
+function clearAll() {
+  releaseOutputPreview();
+  releaseOriginalObjectUrls();
+
+  state.items = [];
+  state.outputFiles = [];
+  state.snippet = "";
+  state.outputNameTouched = false;
+
+  els.outputPreview.removeAttribute("src");
+  els.outputPreview.parentElement.classList.remove("has-image");
+  els.originalPreview.removeAttribute("src");
+  els.originalPreview.parentElement.classList.remove("has-image");
+  els.outputPreviewLabel.textContent = "Hasil akan tampil setelah diproses.";
+  els.originalPreviewLabel.textContent = "Preview file pertama.";
+  els.reportBox.className = "report-box empty";
+  els.reportBox.textContent = "Laporan belum tersedia.";
+  els.snippetOutput.textContent = "<!-- Snippet akan muncul setelah gambar diproses -->";
+  els.downloadBtn.disabled = true;
+  els.copySnippetBtn.disabled = true;
+  renderBatchList();
 }
 
 function resetApp() {
-  releaseObjectUrl("originalObjectUrl");
-  clearOutputOnly();
-
-  state.file = null;
-  state.processableFile = null;
-  state.isHeicInput = false;
-  state.heicNotice = "";
-  state.originalMeta = null;
-  state.outputNameTouched = false;
+  clearAll();
 
   els.fileInput.value = "";
   els.fileInfo.className = "file-info empty";
   els.fileInfo.textContent = "Belum ada file dipilih.";
-  els.originalPreview.removeAttribute("src");
-  els.originalPreview.parentElement.classList.remove("has-image");
   els.processBtn.disabled = true;
+  els.progressText.textContent = "";
   els.outputNameInput.value = "";
   els.altInput.value = "";
   els.presetSelect.value = "custom";
@@ -529,11 +707,63 @@ function parseWidths(value) {
   return unique.sort((a, b) => a - b).slice(0, 8);
 }
 
-function releaseObjectUrl(key) {
-  if (state[key]) {
-    URL.revokeObjectURL(state[key]);
-    state[key] = null;
+function makeUniqueFilename(filename, usedNames) {
+  if (!usedNames.has(filename)) {
+    usedNames.add(filename);
+    return filename;
   }
+
+  const dotIndex = filename.lastIndexOf(".");
+  const base = dotIndex >= 0 ? filename.slice(0, dotIndex) : filename;
+  const ext = dotIndex >= 0 ? filename.slice(dotIndex) : "";
+  let counter = 2;
+
+  while (usedNames.has(`${base}-${counter}${ext}`)) {
+    counter += 1;
+  }
+
+  const nextName = `${base}-${counter}${ext}`;
+  usedNames.add(nextName);
+  return nextName;
+}
+
+function releaseOutputPreview() {
+  if (state.outputPreviewUrl) {
+    URL.revokeObjectURL(state.outputPreviewUrl);
+    state.outputPreviewUrl = null;
+  }
+}
+
+function releaseOriginalObjectUrls() {
+  state.items.forEach((item) => {
+    if (item.originalObjectUrl) {
+      URL.revokeObjectURL(item.originalObjectUrl);
+      item.originalObjectUrl = null;
+    }
+  });
+  state.originalPreviewUrl = null;
+}
+
+function updateQualityLabel() {
+  els.qualityOutput.value = els.qualityInput.value;
+  els.qualityOutput.textContent = els.qualityInput.value;
+}
+
+function formatTimestampForName(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate())
+  ].join("") + "-" + [
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+    pad(date.getSeconds())
+  ].join("");
+}
+
+function yieldToBrowser() {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
 function showToast(message) {

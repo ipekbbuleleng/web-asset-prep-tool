@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Web Asset Prep Tool v1-R2-R1</title>
-  <meta name="description" content="PWA lokal untuk resize, convert WebP, dukungan HEIC, responsive image generator, laporan optimasi, dan generate HTML snippet.">
+  <title>Web Asset Prep Tool v1-R3</title>
+  <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
@@ -24,7 +24,7 @@
     </div>
     <div class="header-badge" aria-label="Status aplikasi">
       <span class="dot"></span>
-      v1-R2-R1 naming fix
+      v1-R3 batch
     </div>
   </header>
 
@@ -33,19 +33,23 @@
       <div class="panel-header">
         <div>
           <h2 id="upload-title">1. Upload aset</h2>
-          <p>Pilih JPG, PNG, WebP, HEIC, atau HEIF. Semua proses berjalan lokal di browser.</p>
+          <p>Pilih satu atau banyak file JPG, PNG, WebP, HEIC, atau HEIF. Semua proses berjalan lokal di browser.</p>
         </div>
       </div>
 
       <label id="dropZone" class="drop-zone" for="fileInput">
-        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif">
+        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
         <span class="drop-icon" aria-hidden="true">⇪</span>
         <strong>Tarik gambar ke sini atau klik untuk memilih file</strong>
-        <small>Disarankan: foto asli, banner, screenshot, atau gambar konten. HEIC/HEIF akan dibaca melalui decoder tambahan.</small>
+        <small>Batch upload sudah didukung. HEIC/HEIF akan dibaca melalui decoder tambahan.</small>
       </label>
 
       <div id="fileInfo" class="file-info empty">
         Belum ada file dipilih.
+      </div>
+
+      <div id="batchList" class="batch-list empty">
+        Daftar batch akan muncul setelah file dipilih.
       </div>
     </section>
 
@@ -53,7 +57,7 @@
       <div class="panel-header">
         <div>
           <h2 id="settings-title">2. Atur output</h2>
-          <p>Pilih preset atau atur manual.</p>
+          <p>Pilih preset atau atur manual. Pada batch, nama file asli tetap dipakai dan suffix ditambahkan otomatis.</p>
         </div>
       </div>
 
@@ -71,8 +75,9 @@
         </label>
 
         <label>
-          Nama file output / base name
-          <input id="outputNameInput" type="text" placeholder="contoh: epkb-kegiatan">
+          Nama file output / suffix batch
+          <input id="outputNameInput" type="text" placeholder="contoh: hero">
+          <small class="field-help">Single file: nama dasar output. Batch: suffix yang ditambahkan ke nama file asli.</small>
         </label>
 
         <label>
@@ -118,7 +123,7 @@
         <label>
           Daftar width responsive
           <input id="responsiveWidthsInput" type="text" value="480, 800, 1200" placeholder="contoh: 480, 800, 1200">
-          <small class="field-help">Pisahkan dengan koma. Maksimum 8 varian agar tetap ringan.</small>
+          <small class="field-help">Pisahkan dengan koma. Maksimum 8 varian per file agar tetap ringan.</small>
         </label>
 
         <label>
@@ -132,6 +137,7 @@
         <button id="processBtn" class="primary" type="button" disabled>Proses gambar</button>
         <button id="downloadBtn" type="button" disabled>Download hasil</button>
         <button id="resetBtn" type="button">Reset</button>
+        <span id="progressText" class="progress-text"></span>
       </div>
     </section>
 
@@ -139,6 +145,7 @@
       <article class="panel preview-card">
         <div class="panel-header compact">
           <h2>3. Preview original</h2>
+          <small id="originalPreviewLabel" class="preview-label">Preview file pertama.</small>
         </div>
         <div class="preview-box">
           <img id="originalPreview" alt="Preview gambar asli">
@@ -162,7 +169,7 @@
       <div class="panel-header">
         <div>
           <h2 id="report-title">5. Laporan optimasi</h2>
-          <p>Bandingkan ukuran, dimensi, dan status kesiapan web.</p>
+          <p>Bandingkan ukuran, dimensi, jumlah output, dan status kesiapan web.</p>
         </div>
       </div>
 
@@ -175,7 +182,7 @@
       <div class="panel-header">
         <div>
           <h2 id="snippet-title">6. HTML snippet</h2>
-          <p>Gunakan kode ini di repository aplikasi utama.</p>
+          <p>Untuk batch, snippet akan dibuat per file.</p>
         </div>
         <button id="copySnippetBtn" type="button" disabled>Copy</button>
       </div>

@@ -151,7 +151,67 @@ export function renderResponsiveReport({
     </table>
 
     <div class="note-box">
-      Gunakan tombol <strong>Download hasil</strong> untuk mengunduh semua varian sekaligus secara berurutan.
+      Gunakan tombol <strong>Download hasil</strong> untuk mengunduh semua varian dalam file ZIP.
+    </div>
+  `;
+}
+
+export function renderBatchReport({ items, outputFiles, outputMode }) {
+  const totalOriginalSize = items.reduce((sum, item) => sum + item.file.size, 0);
+  const totalOutputSize = outputFiles.reduce((sum, item) => sum + item.size, 0);
+  const successItems = items.filter((item) => item.status === "done");
+  const failedItems = items.filter((item) => item.status === "error");
+  const savingPercent = getSavingPercent(totalOriginalSize, totalOutputSize);
+  const largestOutput = outputFiles.reduce((best, item) => !best || item.size > best.size ? item : best, null);
+  const recommendation = buildRecommendation({
+    savingPercent,
+    outputSize: largestOutput?.size || totalOutputSize,
+    outputWidth: largestOutput?.width || 1200
+  });
+
+  return `
+    <table class="report-table">
+      <tbody>
+        <tr><th scope="row">Mode output</th><td>${escapeHtml(outputMode)}</td></tr>
+        <tr><th scope="row">Jumlah file input</th><td>${items.length} file</td></tr>
+        <tr><th scope="row">Berhasil</th><td>${successItems.length} file</td></tr>
+        <tr><th scope="row">Gagal</th><td>${failedItems.length} file</td></tr>
+        <tr><th scope="row">Jumlah file output</th><td>${outputFiles.length} file</td></tr>
+        <tr><th scope="row">Total ukuran asli</th><td>${formatBytes(totalOriginalSize)}</td></tr>
+        <tr><th scope="row">Total ukuran output</th><td>${formatBytes(totalOutputSize)}</td></tr>
+        <tr><th scope="row">Penghematan total</th><td>${savingPercent.toFixed(1)}%</td></tr>
+        <tr><th scope="row">Status rekomendasi</th><td><span class="status-pill ${recommendation.className}">${recommendation.label}</span><br><small>${recommendation.note}</small></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Detail batch</h3>
+    <table class="variant-table">
+      <thead>
+        <tr>
+          <th>File input</th>
+          <th>Dimensi asli</th>
+          <th>Ukuran asli</th>
+          <th>Output</th>
+          <th>Total output</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map((item) => `
+          <tr>
+            <td>${escapeHtml(item.file.name)}</td>
+            <td>${item.meta ? `${item.meta.width} × ${item.meta.height}px` : "-"}</td>
+            <td>${formatBytes(item.file.size)}</td>
+            <td>${item.outputs.length} file</td>
+            <td>${formatBytes(item.outputs.reduce((sum, output) => sum + output.size, 0))}</td>
+            <td>${renderStatus(item)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <div class="note-box">
+      Tombol <strong>Download hasil</strong> akan membuat file ZIP berisi semua output batch.
     </div>
   `;
 }
@@ -183,6 +243,13 @@ export function buildPictureSnippet({ outputs, alt, sizes, mimeType }) {
   >
   <img src="./assets/images/${escapeAttribute(fallback.name)}" alt="${safeAlt}" width="${fallback.width}" height="${fallback.height}" loading="lazy" decoding="async">
 </picture>`;
+}
+
+function renderStatus(item) {
+  if (item.status === "done") return `<span class="status-pill status-ready">Selesai</span>`;
+  if (item.status === "error") return `<span class="status-pill status-risk">Gagal</span><br><small>${escapeHtml(item.error || "")}</small>`;
+  if (item.status === "processing") return `<span class="status-pill status-check">Proses</span>`;
+  return `<span class="status-pill status-neutral">Siap</span>`;
 }
 
 function pickFallbackVariant(outputs) {
