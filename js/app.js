@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.5-r3-r1-bg-reprocess-reset";
+const APP_VERSION = "1.0.5-r5-r3-r2-bg-color-picker";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -46,7 +46,8 @@ const state = {
   outputPreviewUrl: null,
   outputFiles: [],
   snippet: "",
-  outputNameTouched: false
+  outputNameTouched: false,
+  bgColorPickerArmed: false
 };
 
 const els = {
@@ -68,6 +69,8 @@ const els = {
   bgRemoveInput: document.querySelector("#bgRemoveInput"),
   bgModeSelect: document.querySelector("#bgModeSelect"),
   bgColorInput: document.querySelector("#bgColorInput"),
+  bgPickFromImageBtn: document.querySelector("#bgPickFromImageBtn"),
+  bgPickHint: document.querySelector("#bgPickHint"),
   bgToleranceInput: document.querySelector("#bgToleranceInput"),
   bgToleranceOutput: document.querySelector("#bgToleranceOutput"),
   bgFeatherInput: document.querySelector("#bgFeatherInput"),
@@ -174,7 +177,11 @@ function bindEvents() {
       syncBackgroundControls();
     });
   });
+
+  els.bgPickFromImageBtn?.addEventListener("click", toggleBackgroundColorPicker);
+  els.originalPreview?.addEventListener("click", handleOriginalPreviewColorPick);
 }
+
 
 async function handleFiles(files) {
   clearAll();
@@ -260,12 +267,103 @@ function updateOriginalPreview() {
     els.originalPreview.removeAttribute("src");
     els.originalPreview.parentElement.classList.remove("has-image");
     els.originalPreviewLabel.textContent = "Preview file pertama.";
+    setBackgroundPickerArmed(false);
     return;
   }
   state.originalPreviewUrl = firstReady.originalObjectUrl;
   els.originalPreview.src = firstReady.originalObjectUrl;
   els.originalPreview.parentElement.classList.add("has-image");
   els.originalPreviewLabel.textContent = `${firstReady.file.name} · ${firstReady.meta.width} × ${firstReady.meta.height}px`;
+  updateBackgroundPickerUi();
+}
+
+function toggleBackgroundColorPicker() {
+  if (!els.bgRemoveInput?.checked) {
+    showToast("Aktifkan hapus background terlebih dahulu.");
+    return;
+  }
+
+  if (!state.items.length || !els.originalPreview?.src) {
+    showToast("Upload gambar terlebih dahulu agar warna bisa diambil dari preview.");
+    return;
+  }
+
+  if (els.bgModeSelect) els.bgModeSelect.value = "manual";
+  setBackgroundPickerArmed(!state.bgColorPickerArmed);
+  syncBackgroundControls();
+
+  if (state.bgColorPickerArmed) {
+    showToast("Mode picker aktif. Klik area background pada Preview original.");
+  }
+}
+
+function setBackgroundPickerArmed(value) {
+  state.bgColorPickerArmed = !!value;
+  updateBackgroundPickerUi();
+}
+
+function updateBackgroundPickerUi() {
+  const canPick = !!(els.bgRemoveInput?.checked && state.items.length > 0 && els.originalPreview?.src);
+  const previewBox = els.originalPreview?.parentElement;
+
+  if (els.bgPickFromImageBtn) {
+    els.bgPickFromImageBtn.disabled = !canPick;
+    els.bgPickFromImageBtn.textContent = state.bgColorPickerArmed ? "Batal pilih warna" : "Ambil dari gambar";
+  }
+
+  if (els.bgPickHint) {
+    const message = state.bgColorPickerArmed
+      ? "Mode picker aktif. Klik area background pada preview original untuk mengambil warna."
+      : "Klik tombol lalu pilih area background pada preview original. Mode akan otomatis menjadi manual.";
+    els.bgPickHint.textContent = message;
+    els.bgPickHint.classList.toggle("is-active", state.bgColorPickerArmed);
+  }
+
+  previewBox?.classList.toggle("is-pick-color", state.bgColorPickerArmed);
+}
+
+function handleOriginalPreviewColorPick(event) {
+  if (!state.bgColorPickerArmed) return;
+
+  const img = els.originalPreview;
+  if (!img?.src || !img.naturalWidth || !img.naturalHeight) {
+    showToast("Preview original belum siap.");
+    setBackgroundPickerArmed(false);
+    return;
+  }
+
+  const rect = img.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const x = Math.max(0, Math.min(img.naturalWidth - 1, Math.floor((event.clientX - rect.left) * (img.naturalWidth / rect.width))));
+  const y = Math.max(0, Math.min(img.naturalHeight - 1, Math.floor((event.clientY - rect.top) * (img.naturalHeight / rect.height))));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  if (!ctx) {
+    showToast("Browser tidak dapat membaca warna dari preview.");
+    setBackgroundPickerArmed(false);
+    return;
+  }
+
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+  const pixel = ctx.getImageData(x, y, 1, 1).data;
+  const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+
+  if (els.bgModeSelect) els.bgModeSelect.value = "manual";
+  if (els.bgColorInput) els.bgColorInput.value = hex;
+  setBackgroundPickerArmed(false);
+  syncBackgroundControls();
+  updateBackgroundLabels();
+  updateBackgroundSafetyBox();
+  showToast(`Warna background dipilih: ${hex}`);
+}
+
+function rgbToHex(r, g, b) {
+  return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
 }
 
 function applyPreset() {
@@ -609,6 +707,7 @@ function clearOutputOnly() {
 function clearAll() {
   releaseOutputPreview();
   releaseOriginalObjectUrls();
+  setBackgroundPickerArmed(false);
   state.items = [];
   state.outputFiles = [];
   state.snippet = "";
@@ -669,6 +768,7 @@ function resetSettingsValues() {
   if (els.bgRemoveInput) els.bgRemoveInput.checked = false;
   if (els.bgModeSelect) els.bgModeSelect.value = "auto";
   if (els.bgColorInput) els.bgColorInput.value = "#ffffff";
+  setBackgroundPickerArmed(false);
   if (els.bgToleranceInput) els.bgToleranceInput.value = 24;
   if (els.bgFeatherInput) els.bgFeatherInput.value = 12;
   els.responsiveWidthsInput.value = "480, 800, 1200";
@@ -716,8 +816,17 @@ function syncBackgroundControls() {
     els.bgColorInput.disabled = !enabled || !manual;
   }
 
+  if (!enabled) {
+    setBackgroundPickerArmed(false);
+  }
+
+  if (els.bgPickFromImageBtn) {
+    els.bgPickFromImageBtn.disabled = !enabled || state.items.length === 0 || !els.originalPreview?.src;
+  }
+
   updateBackgroundLabels();
   updateBackgroundSafetyBox();
+  updateBackgroundPickerUi();
 }
 
 function updateBackgroundLabels() {
@@ -753,9 +862,13 @@ function updateBackgroundSafetyBox() {
     ? `<span class="status-pill status-check">Tolerance tinggi</span> Cek tepi objek agar tidak ikut terhapus.`
     : `<span class="status-pill status-ready">Mode ringan</span> Cocok untuk logo/gambar dengan background polos.`;
 
+  const modeNote = options.mode === "manual"
+    ? ` <span class="status-pill status-neutral">Manual</span> Warna target saat ini <code>${escapeHtml(options.color)}</code>. Gunakan tombol <strong>Ambil dari gambar</strong> bila ingin memilih langsung dari preview.`
+    : ` <span class="status-pill status-neutral">Auto</span> Warna background dibaca dari sudut gambar.`;
+
   els.bgSafetyBox.innerHTML = `
     <strong>Background remover:</strong>
-    ${toleranceLevel}${formatNote}
+    ${toleranceLevel}${modeNote}${formatNote}
   `;
 }
 

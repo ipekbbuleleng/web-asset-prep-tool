@@ -171,7 +171,11 @@
 
           <label>
             Warna background manual
-            <input id="bgColorInput" type="color" value="#ffffff" disabled>
+            <div class="bg-picker-row">
+              <input id="bgColorInput" type="color" value="#ffffff" disabled>
+              <button id="bgPickFromImageBtn" type="button" class="mini-btn" disabled>Ambil dari gambar</button>
+            </div>
+            <small id="bgPickHint" class="field-help">Klik tombol lalu pilih area background pada preview original. Mode akan otomatis menjadi manual.</small>
           </label>
 
           <label class="quality-field">

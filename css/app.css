@@ -631,6 +631,30 @@ input[type="range"] { padding: 0; accent-color: var(--brand); }
 .background-toggle {
   grid-column: 1 / -1;
 }
+
+.bg-picker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+.bg-picker-row .mini-btn {
+  min-height: 2.85rem;
+  white-space: nowrap;
+}
+.preview-box.is-pick-color {
+  cursor: crosshair;
+  outline: 2px dashed var(--brand);
+  outline-offset: 3px;
+}
+.preview-box.is-pick-color img {
+  cursor: crosshair;
+}
+.field-help.is-active {
+  color: var(--brand-strong);
+  font-weight: 700;
+}
+
 .background-options input[type="color"] {
   min-height: 2.85rem;
   padding: 0.25rem 0.4rem;
