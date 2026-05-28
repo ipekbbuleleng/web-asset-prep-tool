@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5</title>
+  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3</title>
   <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -19,7 +19,7 @@
       <p class="eyebrow">PWA LOKAL TANPA BACKEND</p>
       <h1>Image & Vector Prep</h1>
       <p class="lead">
-        Optimasi gambar/foto, HEIC, responsive image, batch ZIP, SVG optimizer ringan, dan Raster to SVG Tracer eksperimental.
+        Optimasi gambar/foto, HEIC, background remover ringan, responsive image, batch ZIP, SVG optimizer ringan, dan Raster to SVG Tracer eksperimental.
       </p>
     </div>
     <div class="header-badge" aria-label="Status aplikasi">
@@ -70,7 +70,7 @@
       <div class="panel-header">
         <div>
           <h2 id="settings-title">2. Atur output</h2>
-          <p>Pilih preset atau atur manual. Pada batch, nama file asli tetap dipakai dan suffix ditambahkan otomatis.</p>
+          <p>Pilih preset atau atur manual. Aktifkan hapus background untuk logo/gambar dengan latar polos.</p>
         </div>
       </div>
 
@@ -145,6 +145,59 @@
           <small class="field-help">Digunakan pada snippet <code>&lt;picture&gt;</code> atau <code>srcset</code>.</small>
         </label>
       </form>
+
+
+      <div class="background-options" aria-labelledby="bg-options-title">
+        <div class="panel-header compact">
+          <div>
+            <h3 id="bg-options-title">Background Remover Ringan</h3>
+            <p>Untuk logo, ikon, stiker, atau gambar dengan background polos. Bukan untuk foto kompleks.</p>
+          </div>
+        </div>
+
+        <div class="background-options-grid">
+          <label class="check-row background-toggle">
+            <input id="bgRemoveInput" type="checkbox">
+            <span>Aktifkan hapus background</span>
+          </label>
+
+          <label>
+            Mode warna background
+            <select id="bgModeSelect" disabled>
+              <option value="auto" selected>Auto dari sudut gambar</option>
+              <option value="manual">Manual pilih warna</option>
+            </select>
+          </label>
+
+          <label>
+            Warna background manual
+            <input id="bgColorInput" type="color" value="#ffffff" disabled>
+          </label>
+
+          <label class="quality-field">
+            Tolerance
+            <div class="range-row">
+              <input id="bgToleranceInput" type="range" min="0" max="100" step="1" value="24" disabled>
+              <output id="bgToleranceOutput">24</output>
+            </div>
+            <small class="field-help">Semakin tinggi, semakin banyak warna mirip background yang dibuat transparan.</small>
+          </label>
+
+          <label class="quality-field">
+            Edge softness
+            <div class="range-row">
+              <input id="bgFeatherInput" type="range" min="0" max="100" step="1" value="12" disabled>
+              <output id="bgFeatherOutput">12</output>
+            </div>
+            <small class="field-help">Melembutkan tepian agar tidak terlalu bergerigi.</small>
+          </label>
+        </div>
+
+        <div id="bgSafetyBox" class="safety-box">
+          <strong>Catatan:</strong>
+          Hapus background ringan bekerja baik untuk latar polos. Jika output format JPG dipilih, sistem otomatis memakai PNG agar transparansi tidak hilang.
+        </div>
+      </div>
 
       <div class="action-row">
         <button id="processBtn" class="primary" type="button" disabled>Proses gambar</button>

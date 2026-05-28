@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.3-r3-r1";
+const APP_VERSION = "1.0.5-r3-bg-remover";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -65,6 +65,14 @@ const els = {
   responsiveModeInput: document.querySelector("#responsiveModeInput"),
   responsiveWidthsInput: document.querySelector("#responsiveWidthsInput"),
   sizesInput: document.querySelector("#sizesInput"),
+  bgRemoveInput: document.querySelector("#bgRemoveInput"),
+  bgModeSelect: document.querySelector("#bgModeSelect"),
+  bgColorInput: document.querySelector("#bgColorInput"),
+  bgToleranceInput: document.querySelector("#bgToleranceInput"),
+  bgToleranceOutput: document.querySelector("#bgToleranceOutput"),
+  bgFeatherInput: document.querySelector("#bgFeatherInput"),
+  bgFeatherOutput: document.querySelector("#bgFeatherOutput"),
+  bgSafetyBox: document.querySelector("#bgSafetyBox"),
   processBtn: document.querySelector("#processBtn"),
   downloadBtn: document.querySelector("#downloadBtn"),
   resetBtn: document.querySelector("#resetBtn"),
@@ -86,6 +94,8 @@ function boot() {
   registerServiceWorker();
   updateQualityLabel();
   syncResponsiveControls();
+  syncBackgroundControls();
+  updateBackgroundLabels();
   console.info(`Web Asset Prep Tool v${APP_VERSION} aktif`);
 }
 
@@ -149,6 +159,20 @@ function bindEvents() {
 
   els.outputNameInput.addEventListener("input", () => {
     state.outputNameTouched = !!els.outputNameInput.value.trim();
+  });
+
+  els.bgRemoveInput?.addEventListener("change", () => {
+    syncBackgroundControls();
+  });
+
+  [els.bgModeSelect, els.bgColorInput, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
+    element?.addEventListener("input", () => {
+      updateBackgroundLabels();
+      updateBackgroundSafetyBox();
+    });
+    element?.addEventListener("change", () => {
+      syncBackgroundControls();
+    });
   });
 }
 
@@ -302,8 +326,9 @@ async function processBatch() {
   els.progressText.textContent = "Memulai proses batch...";
   clearOutputOnly();
 
-  const mimeType = els.formatSelect.value;
+  const mimeType = getEffectiveOutputMimeType();
   const ext = getOutputExtension(mimeType);
+  const backgroundRemoval = getBackgroundRemovalOptions();
   const responsiveMode = els.responsiveModeInput.checked;
   const widths = responsiveMode ? parseWidths(els.responsiveWidthsInput.value) : [];
 
@@ -334,7 +359,8 @@ async function processBatch() {
             width,
             quality: Number(els.qualityInput.value),
             mimeType,
-            preventUpscale: els.preventUpscaleInput.checked
+            preventUpscale: els.preventUpscaleInput.checked,
+            backgroundRemoval
           });
           const filename = makeUniqueFilename(`${baseName}-${result.outputMeta.width}.${ext}`, usedNames);
           const output = createOutputRecord(result, filename, item);
@@ -348,7 +374,8 @@ async function processBatch() {
           width: Number(els.widthInput.value),
           quality: Number(els.qualityInput.value),
           mimeType,
-          preventUpscale: els.preventUpscaleInput.checked
+          preventUpscale: els.preventUpscaleInput.checked,
+          backgroundRemoval
         });
         const filename = makeUniqueFilename(`${baseName}.${ext}`, usedNames);
         const output = createOutputRecord(result, filename, item);
@@ -383,7 +410,7 @@ async function processBatch() {
 }
 
 function createOutputRecord(result, filename, item) {
-  return { blob: result.blob, name: filename, size: result.outputMeta.size, type: result.outputMeta.type, width: result.outputMeta.width, height: result.outputMeta.height, sourceName: item.file.name, originalSize: item.file.size };
+  return { blob: result.blob, name: filename, size: result.outputMeta.size, type: result.outputMeta.type, width: result.outputMeta.width, height: result.outputMeta.height, sourceName: item.file.name, originalSize: item.file.size, backgroundRemoval: result.backgroundRemoval || null };
 }
 
 function getBaseNameForItem(item, isBatch) {
@@ -424,7 +451,7 @@ function renderReportAfterProcess() {
       return;
     }
     const output = item.outputs[0];
-    els.reportBox.innerHTML = renderSingleReport({ originalName: item.file.name, outputName: output.name, originalType: getReadableMimeLabel(item.file), outputType: output.type, originalSize: item.file.size, outputSize: output.size, originalWidth: item.meta.width, originalHeight: item.meta.height, outputWidth: output.width, outputHeight: output.height });
+    els.reportBox.innerHTML = renderSingleReport({ originalName: item.file.name, outputName: output.name, originalType: getReadableMimeLabel(item.file), outputType: output.type, originalSize: item.file.size, outputSize: output.size, originalWidth: item.meta.width, originalHeight: item.meta.height, outputWidth: output.width, outputHeight: output.height }) + renderBackgroundRemovalDetails(output);
     return;
   }
   els.reportBox.innerHTML = renderBatchReport({ items: state.items, outputFiles: state.outputFiles, outputMode: els.responsiveModeInput.checked ? "Batch Responsive Image Generator" : "Batch Single Output" });
@@ -473,6 +500,7 @@ function buildReportJson() {
     prevent_upscale: els.preventUpscaleInput.checked,
     responsive_widths: els.responsiveModeInput.checked ? parseWidths(els.responsiveWidthsInput.value) : [],
     sizes: els.sizesInput.value,
+    background_removal: getBackgroundRemovalOptions(),
     input_count: state.items.length,
     output_count: state.outputFiles.length,
     total_input_size: state.items.reduce((sum, item) => sum + item.file.size, 0),
@@ -485,7 +513,7 @@ function buildReportJson() {
       input_height: item.meta?.height || null,
       status: item.status,
       error: item.error || "",
-      outputs: item.outputs.map((output) => ({ name: output.name, type: output.type, size: output.size, width: output.width, height: output.height }))
+      outputs: item.outputs.map((output) => ({ name: output.name, type: output.type, size: output.size, width: output.width, height: output.height, background_removal: output.backgroundRemoval || null }))
     }))
   };
 }
@@ -612,11 +640,120 @@ function resetApp() {
   els.qualityInput.value = 80;
   els.preventUpscaleInput.checked = true;
   els.responsiveModeInput.checked = false;
+  if (els.bgRemoveInput) els.bgRemoveInput.checked = false;
+  if (els.bgModeSelect) els.bgModeSelect.value = "auto";
+  if (els.bgColorInput) els.bgColorInput.value = "#ffffff";
+  if (els.bgToleranceInput) els.bgToleranceInput.value = 24;
+  if (els.bgFeatherInput) els.bgFeatherInput.value = 12;
   els.responsiveWidthsInput.value = "480, 800, 1200";
   els.sizesInput.value = "(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px";
   syncResponsiveControls();
+  syncBackgroundControls();
   updateQualityLabel();
+  updateBackgroundLabels();
 }
+
+
+function getEffectiveOutputMimeType() {
+  const selected = els.formatSelect.value;
+  const backgroundRemoval = getBackgroundRemovalOptions();
+
+  if (backgroundRemoval.enabled && selected === "image/jpeg") {
+    return "image/png";
+  }
+
+  return selected;
+}
+
+function getBackgroundRemovalOptions() {
+  const enabled = !!els.bgRemoveInput?.checked;
+
+  return {
+    enabled,
+    mode: els.bgModeSelect?.value === "manual" ? "manual" : "auto",
+    color: els.bgColorInput?.value || "#ffffff",
+    tolerance: Number(els.bgToleranceInput?.value || 24),
+    feather: Number(els.bgFeatherInput?.value || 12)
+  };
+}
+
+function syncBackgroundControls() {
+  const enabled = !!els.bgRemoveInput?.checked;
+  const manual = els.bgModeSelect?.value === "manual";
+
+  [els.bgModeSelect, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
+    if (element) element.disabled = !enabled;
+  });
+
+  if (els.bgColorInput) {
+    els.bgColorInput.disabled = !enabled || !manual;
+  }
+
+  updateBackgroundLabels();
+  updateBackgroundSafetyBox();
+}
+
+function updateBackgroundLabels() {
+  if (els.bgToleranceOutput) {
+    els.bgToleranceOutput.value = els.bgToleranceInput?.value || "24";
+    els.bgToleranceOutput.textContent = els.bgToleranceInput?.value || "24";
+  }
+
+  if (els.bgFeatherOutput) {
+    els.bgFeatherOutput.value = els.bgFeatherInput?.value || "12";
+    els.bgFeatherOutput.textContent = els.bgFeatherInput?.value || "12";
+  }
+}
+
+function updateBackgroundSafetyBox() {
+  if (!els.bgSafetyBox) return;
+
+  const options = getBackgroundRemovalOptions();
+
+  if (!options.enabled) {
+    els.bgSafetyBox.innerHTML = `
+      <strong>Catatan:</strong>
+      Hapus background ringan bekerja baik untuk latar polos. Jika output format JPG dipilih, sistem otomatis memakai PNG agar transparansi tidak hilang.
+    `;
+    return;
+  }
+
+  const formatNote = els.formatSelect.value === "image/jpeg"
+    ? " Output akan dipaksa menjadi PNG karena JPG tidak mendukung transparansi."
+    : "";
+
+  const toleranceLevel = options.tolerance >= 55
+    ? `<span class="status-pill status-check">Tolerance tinggi</span> Cek tepi objek agar tidak ikut terhapus.`
+    : `<span class="status-pill status-ready">Mode ringan</span> Cocok untuk logo/gambar dengan background polos.`;
+
+  els.bgSafetyBox.innerHTML = `
+    <strong>Background remover:</strong>
+    ${toleranceLevel}${formatNote}
+  `;
+}
+
+function renderBackgroundRemovalDetails(output) {
+  const info = output?.backgroundRemoval;
+  if (!info) return "";
+
+  return `
+    <h3>Detail hapus background</h3>
+    <table class="variant-table">
+      <tbody>
+        <tr><th>Mode</th><td>${escapeHtml(info.mode === "manual" ? "Manual" : "Auto dari sudut gambar")}</td></tr>
+        <tr><th>Warna target</th><td><code>${escapeHtml(info.targetColor)}</code></td></tr>
+        <tr><th>Tolerance</th><td>${info.tolerance}</td></tr>
+        <tr><th>Edge softness</th><td>${info.feather}</td></tr>
+        <tr><th>Pixel transparan</th><td>${info.transparentPixels} (${info.transparentPercent.toFixed(1)}%)</td></tr>
+        <tr><th>Pixel soft edge</th><td>${info.partialAlphaPixels} (${info.partialAlphaPercent.toFixed(1)}%)</td></tr>
+      </tbody>
+    </table>
+    <div class="note-box">
+      Jika background belum bersih, naikkan tolerance perlahan. Jika objek ikut hilang, turunkan tolerance atau pilih warna background manual.
+    </div>
+  `;
+}
+
 
 function parseWidths(value) {
   const unique = Array.from(new Set(String(value || "").split(",").map((item) => Number(item.trim())).filter((item) => Number.isFinite(item) && item >= 64 && item <= 5000).map((item) => Math.round(item))));

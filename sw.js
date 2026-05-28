@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-r2-tracer-presets";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-r3-bg-remover";
 const APP_SHELL = [
   "./",
   "./index.html",

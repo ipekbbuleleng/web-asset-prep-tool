@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R2 — Raster Tracer Preset, Safety Guard & Output Quality Polish
+# Web Asset Prep Tool v1-R5-R3 — Image Background Remover Ringan
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -280,3 +280,41 @@ Catatan:
 - Jika status `Tidak disarankan`, gunakan Image Tool dan output WebP/JPG/PNG.
 - Jika status `Perlu cek visual`, bandingkan hasil SVG dengan WebP dari Image Tool.
 - Raster to SVG tetap eksperimental dan sebaiknya hanya untuk logo/ikon/ilustrasi sederhana.
+
+
+## Tambahan v1-R5-R3 — Image Background Remover Ringan
+
+Paket ini menambahkan fitur hapus background ringan pada `image.html`.
+
+Fitur:
+- Aktifkan hapus background pada Image Tool.
+- Auto deteksi warna background dari sudut gambar.
+- Pilih warna background manual.
+- Tolerance slider.
+- Edge softness slider.
+- Output transparan PNG/WebP.
+- Jika output JPG dipilih saat background remover aktif, sistem otomatis memakai PNG agar transparansi tidak hilang.
+- Preview output tetap memakai checkerboard.
+- Laporan detail:
+  - warna target,
+  - tolerance,
+  - edge softness,
+  - jumlah pixel transparan,
+  - jumlah pixel soft edge.
+
+Cocok untuk:
+- logo dengan background putih/polos;
+- ikon;
+- stiker;
+- gambar produk sederhana;
+- asset organisasi dengan latar seragam.
+
+Tidak cocok untuk:
+- foto orang dengan rambut/detail halus;
+- foto kegiatan;
+- background ramai;
+- gambar dengan bayangan kompleks.
+
+Catatan:
+- Ini bukan AI background remover.
+- Untuk objek kompleks, gunakan tool desain khusus atau backend/AI module pada versi lanjutan.
