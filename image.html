@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R1</title>
+  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R3-R3</title>
   <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -161,6 +161,11 @@
             <span>Aktifkan hapus background</span>
           </label>
 
+          <label class="check-row background-toggle">
+            <input id="bgConnectedInput" type="checkbox" checked disabled>
+            <span>Hapus hanya area tersambung dari titik/sudut background</span>
+          </label>
+
           <label>
             Mode warna background
             <select id="bgModeSelect" disabled>
@@ -175,7 +180,7 @@
               <input id="bgColorInput" type="color" value="#ffffff" disabled>
               <button id="bgPickFromImageBtn" type="button" class="mini-btn" disabled>Ambil dari gambar</button>
             </div>
-            <small id="bgPickHint" class="field-help">Klik tombol lalu pilih area background pada preview original. Mode akan otomatis menjadi manual.</small>
+            <small id="bgPickHint" class="field-help">Klik tombol lalu pilih area background pada preview original. Area tersambung dari titik itu saja yang dihapus.</small>
           </label>
 
           <label class="quality-field">

@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.5-r5-r3-r2-bg-color-picker";
+const APP_VERSION = "1.0.5-r3-r3-bg-connected-area";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -47,7 +47,8 @@ const state = {
   outputFiles: [],
   snippet: "",
   outputNameTouched: false,
-  bgColorPickerArmed: false
+  bgColorPickerArmed: false,
+  bgPickedPoint: null
 };
 
 const els = {
@@ -67,6 +68,7 @@ const els = {
   responsiveWidthsInput: document.querySelector("#responsiveWidthsInput"),
   sizesInput: document.querySelector("#sizesInput"),
   bgRemoveInput: document.querySelector("#bgRemoveInput"),
+  bgConnectedInput: document.querySelector("#bgConnectedInput"),
   bgModeSelect: document.querySelector("#bgModeSelect"),
   bgColorInput: document.querySelector("#bgColorInput"),
   bgPickFromImageBtn: document.querySelector("#bgPickFromImageBtn"),
@@ -168,7 +170,7 @@ function bindEvents() {
     syncBackgroundControls();
   });
 
-  [els.bgModeSelect, els.bgColorInput, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
+  [els.bgConnectedInput, els.bgModeSelect, els.bgColorInput, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
     element?.addEventListener("input", () => {
       updateBackgroundLabels();
       updateBackgroundSafetyBox();
@@ -355,6 +357,13 @@ function handleOriginalPreviewColorPick(event) {
 
   if (els.bgModeSelect) els.bgModeSelect.value = "manual";
   if (els.bgColorInput) els.bgColorInput.value = hex;
+  state.bgPickedPoint = {
+    x,
+    y,
+    sourceWidth: img.naturalWidth,
+    sourceHeight: img.naturalHeight
+  };
+  if (els.bgConnectedInput) els.bgConnectedInput.checked = true;
   setBackgroundPickerArmed(false);
   syncBackgroundControls();
   updateBackgroundLabels();
@@ -708,6 +717,7 @@ function clearAll() {
   releaseOutputPreview();
   releaseOriginalObjectUrls();
   setBackgroundPickerArmed(false);
+  state.bgPickedPoint = null;
   state.items = [];
   state.outputFiles = [];
   state.snippet = "";
@@ -766,6 +776,7 @@ function resetSettingsValues() {
   els.preventUpscaleInput.checked = true;
   els.responsiveModeInput.checked = false;
   if (els.bgRemoveInput) els.bgRemoveInput.checked = false;
+  if (els.bgConnectedInput) els.bgConnectedInput.checked = true;
   if (els.bgModeSelect) els.bgModeSelect.value = "auto";
   if (els.bgColorInput) els.bgColorInput.value = "#ffffff";
   setBackgroundPickerArmed(false);
@@ -774,6 +785,7 @@ function resetSettingsValues() {
   els.responsiveWidthsInput.value = "480, 800, 1200";
   els.sizesInput.value = "(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px";
   state.outputNameTouched = false;
+  state.bgPickedPoint = null;
   syncResponsiveControls();
   syncBackgroundControls();
   updateQualityLabel();
@@ -800,7 +812,9 @@ function getBackgroundRemovalOptions() {
     mode: els.bgModeSelect?.value === "manual" ? "manual" : "auto",
     color: els.bgColorInput?.value || "#ffffff",
     tolerance: Number(els.bgToleranceInput?.value || 24),
-    feather: Number(els.bgFeatherInput?.value || 12)
+    feather: Number(els.bgFeatherInput?.value || 12),
+    connectedOnly: els.bgConnectedInput?.checked !== false,
+    pickedPoint: state.bgPickedPoint
   };
 }
 
@@ -808,7 +822,7 @@ function syncBackgroundControls() {
   const enabled = !!els.bgRemoveInput?.checked;
   const manual = els.bgModeSelect?.value === "manual";
 
-  [els.bgModeSelect, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
+  [els.bgConnectedInput, els.bgModeSelect, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
     if (element) element.disabled = !enabled;
   });
 
@@ -863,12 +877,20 @@ function updateBackgroundSafetyBox() {
     : `<span class="status-pill status-ready">Mode ringan</span> Cocok untuk logo/gambar dengan background polos.`;
 
   const modeNote = options.mode === "manual"
-    ? ` <span class="status-pill status-neutral">Manual</span> Warna target saat ini <code>${escapeHtml(options.color)}</code>. Gunakan tombol <strong>Ambil dari gambar</strong> bila ingin memilih langsung dari preview.`
+    ? ` <span class="status-pill status-neutral">Manual</span> Warna target saat ini <code>${escapeHtml(options.color)}</code>. Gunakan tombol <strong>Ambil dari gambar</strong> untuk memilih titik background.`
     : ` <span class="status-pill status-neutral">Auto</span> Warna background dibaca dari sudut gambar.`;
+
+  const areaNote = options.connectedOnly
+    ? ` <span class="status-pill status-ready">Area tersambung</span> Hanya warna yang terhubung ke titik/sudut background yang dihapus.`
+    : ` <span class="status-pill status-check">Global</span> Semua warna mirip di seluruh gambar bisa ikut terhapus.`;
+
+  const pointNote = options.pickedPoint
+    ? ` <span class="bg-picked-point">Titik: ${options.pickedPoint.x}, ${options.pickedPoint.y}</span>`
+    : "";
 
   els.bgSafetyBox.innerHTML = `
     <strong>Background remover:</strong>
-    ${toleranceLevel}${modeNote}${formatNote}
+    ${toleranceLevel}${modeNote}${areaNote}${pointNote}${formatNote}
   `;
 }
 
@@ -881,6 +903,8 @@ function renderBackgroundRemovalDetails(output) {
     <table class="variant-table">
       <tbody>
         <tr><th>Mode</th><td>${escapeHtml(info.mode === "manual" ? "Manual" : "Auto dari sudut gambar")}</td></tr>
+        <tr><th>Area hapus</th><td>${escapeHtml(info.connectedOnly ? "Hanya area tersambung" : "Global seluruh gambar")}</td></tr>
+        <tr><th>Titik seed</th><td>${escapeHtml(info.seedLabel || "-")}</td></tr>
         <tr><th>Warna target</th><td><code>${escapeHtml(info.targetColor)}</code></td></tr>
         <tr><th>Tolerance</th><td>${info.tolerance}</td></tr>
         <tr><th>Edge softness</th><td>${info.feather}</td></tr>

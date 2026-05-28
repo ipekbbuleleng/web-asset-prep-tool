@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-r3-r1-bg-reprocess-reset";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-r3-r3-bg-connected-area";
 const APP_SHELL = [
   "./",
   "./index.html",

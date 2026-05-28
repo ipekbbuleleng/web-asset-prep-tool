@@ -664,3 +664,11 @@ input[type="range"] { padding: 0; accent-color: var(--brand); }
     grid-template-columns: 1fr;
   }
 }
+
+.bg-picked-point {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.4rem;
+  color: var(--muted);
+}

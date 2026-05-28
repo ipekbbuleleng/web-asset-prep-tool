@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R1 — Background Remover Reprocess & Reset Setting Fix
+# Web Asset Prep Tool v1-R5-R3-R3 — Connected Area Background Remover
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -334,3 +334,21 @@ Perbaikan:
 Catatan:
 - Untuk mengganti file, pilih/upload file baru dari area upload.
 - Saat background remover aktif dan output JPG dipilih, sistem tetap memaksa output PNG agar transparansi tidak hilang.
+
+
+## Perbaikan v1-R5-R3-R3 — Connected Area Background Remover
+
+Paket ini memperbaiki kasus ketika warna background yang dipilih juga muncul di objek utama.
+
+Tambahan:
+- Opsi `Hapus hanya area tersambung dari titik/sudut background`.
+- Jika user memakai `Ambil dari gambar`, titik klik disimpan sebagai seed area background.
+- Background remover hanya menghapus warna mirip yang tersambung dari seed tersebut.
+- Warna serupa di dalam objek utama tidak ikut terhapus jika tidak tersambung ke area background.
+- Mode auto memakai seed dari empat sudut gambar.
+- Laporan detail menampilkan mode area hapus dan titik seed.
+
+Catatan:
+- Cocok untuk logo/lencana dengan latar luar bidang tertentu, misalnya luar lingkaran/perisai.
+- Jika ada beberapa area background yang terpisah, klik area yang ingin dihapus atau nonaktifkan opsi area tersambung untuk mode global.
+- Untuk objek/foto kompleks, fitur ini tetap bukan AI background remover.
