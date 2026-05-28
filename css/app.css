@@ -591,3 +591,23 @@ input[type="range"] { padding: 0; accent-color: var(--brand); }
 .wide-range-row output {
   font-weight: 800;
 }
+
+
+.safety-box {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  line-height: 1.55;
+}
+.safety-box .status-pill {
+  margin: 0 0.45rem;
+}
+.safety-issue-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  line-height: 1.55;
+}

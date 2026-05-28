@@ -35,7 +35,10 @@ export async function traceRasterToSvg(file, options = {}) {
     const fillColor = normalizeHexColor(options.fillColor || "#111827");
 
     const pathData = [];
+    const colorBuckets = new Set();
+
     let activePixelCount = 0;
+    let transparentPixelCount = 0;
     let runCount = 0;
 
     for (let y = 0; y < targetHeight; y += 1) {
@@ -47,6 +50,12 @@ export async function traceRasterToSvg(file, options = {}) {
         const g = imageData.data[idx + 1];
         const b = imageData.data[idx + 2];
         const a = imageData.data[idx + 3];
+
+        if (a <= 24) {
+          transparentPixelCount += 1;
+        } else if (colorBuckets.size <= 768) {
+          colorBuckets.add(`${Math.round(r / 32)}-${Math.round(g / 32)}-${Math.round(b / 32)}`);
+        }
 
         const intensity = 0.299 * r + 0.587 * g + 0.114 * b;
         const active = a > 24 && (invert ? intensity > threshold : intensity < threshold);
@@ -71,6 +80,7 @@ export async function traceRasterToSvg(file, options = {}) {
       }
     }
 
+    const pixelCount = targetWidth * targetHeight;
     const title = escapeXml(options.title || "Traced SVG");
     const background = options.transparentBackground
       ? ""
@@ -91,8 +101,13 @@ export async function traceRasterToSvg(file, options = {}) {
         sourceHeight,
         width: targetWidth,
         height: targetHeight,
+        pixelCount,
         activePixelCount,
+        activeRatio: pixelCount ? activePixelCount / pixelCount : 0,
+        transparentPixelCount,
+        transparentRatio: pixelCount ? transparentPixelCount / pixelCount : 0,
         runCount,
+        colorBucketCount: colorBuckets.size,
         threshold,
         fillColor,
         invert,

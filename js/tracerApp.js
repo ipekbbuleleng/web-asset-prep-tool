@@ -19,7 +19,46 @@ import {
   svgTextToObjectUrl
 } from "./rasterTracer.js";
 
-const APP_VERSION = "1.0.5-r1-tracer-width-slider";
+const APP_VERSION = "1.0.5-r2-tracer-presets";
+
+const TRACER_PRESETS = {
+  icon: {
+    label: "Ikon sederhana",
+    traceWidth: 192,
+    threshold: 128,
+    fillColor: "#111827",
+    invert: false,
+    transparent: true,
+    note: "Untuk ikon satu warna atau simbol sangat sederhana."
+  },
+  logo: {
+    label: "Logo sederhana",
+    traceWidth: 256,
+    threshold: 128,
+    fillColor: "#111827",
+    invert: false,
+    transparent: true,
+    note: "Preset seimbang untuk logo sederhana."
+  },
+  flat: {
+    label: "Ilustrasi flat",
+    traceWidth: 384,
+    threshold: 140,
+    fillColor: "#111827",
+    invert: false,
+    transparent: true,
+    note: "Untuk ilustrasi flat dengan detail sedang."
+  },
+  detail: {
+    label: "Detail tinggi",
+    traceWidth: 512,
+    threshold: 128,
+    fillColor: "#111827",
+    invert: false,
+    transparent: true,
+    note: "Lebih detail, tetapi output SVG bisa membesar."
+  }
+};
 
 const state = {
   file: null,
@@ -30,13 +69,15 @@ const state = {
   outputName: "",
   snippet: "",
   sourceMeta: null,
-  outputMeta: null
+  outputMeta: null,
+  currentPreset: "logo"
 };
 
 const els = {
   fileInput: document.querySelector("#tracerFileInput"),
   dropZone: document.querySelector("#tracerDropZone"),
   fileInfo: document.querySelector("#tracerFileInfo"),
+  presetSelect: document.querySelector("#tracerPresetSelect"),
   outputNameInput: document.querySelector("#outputNameInput"),
   traceWidthInput: document.querySelector("#traceWidthInput"),
   traceWidthOutput: document.querySelector("#traceWidthOutput"),
@@ -45,7 +86,9 @@ const els = {
   fillColorInput: document.querySelector("#fillColorInput"),
   invertInput: document.querySelector("#invertInput"),
   transparentInput: document.querySelector("#transparentInput"),
+  safetyBox: document.querySelector("#tracerSafetyBox"),
   traceBtn: document.querySelector("#traceBtn"),
+  safePresetBtn: document.querySelector("#safePresetBtn"),
   downloadBtn: document.querySelector("#downloadSvgBtn"),
   copyBtn: document.querySelector("#copySnippetBtn"),
   resetBtn: document.querySelector("#resetBtn"),
@@ -63,9 +106,11 @@ boot();
 
 function boot() {
   bindEvents();
-  registerServiceWorker();
+  applyPreset("logo");
   updateThresholdLabel();
   updateTraceWidthLabel();
+  updateSafetyHint();
+  registerServiceWorker();
   console.info(`Raster Tracer v${APP_VERSION} aktif`);
 }
 
@@ -94,12 +139,71 @@ function bindEvents() {
     if (file) handleFile(file);
   });
 
-  els.thresholdInput.addEventListener("input", updateThresholdLabel);
-  els.traceWidthInput.addEventListener("input", updateTraceWidthLabel);
+  els.presetSelect.addEventListener("change", () => {
+    applyPreset(els.presetSelect.value);
+  });
+
+  els.thresholdInput.addEventListener("input", () => {
+    markCustomPreset();
+    updateThresholdLabel();
+    updateSafetyHint();
+  });
+
+  els.traceWidthInput.addEventListener("input", () => {
+    markCustomPreset();
+    updateTraceWidthLabel();
+    updateSafetyHint();
+  });
+
+  [els.fillColorInput, els.invertInput, els.transparentInput].forEach((element) => {
+    element.addEventListener("input", () => {
+      markCustomPreset();
+      updateSafetyHint();
+    });
+    element.addEventListener("change", () => {
+      markCustomPreset();
+      updateSafetyHint();
+    });
+  });
+
+  els.safePresetBtn.addEventListener("click", () => {
+    applyPreset("logo");
+    showToast("Setting aman diterapkan.");
+  });
+
   els.traceBtn.addEventListener("click", traceCurrentFile);
   els.downloadBtn.addEventListener("click", downloadCurrentSvg);
   els.copyBtn.addEventListener("click", copyCurrentSnippet);
   els.resetBtn.addEventListener("click", resetApp);
+}
+
+function applyPreset(key) {
+  if (key === "custom") {
+    state.currentPreset = "custom";
+    els.presetSelect.value = "custom";
+    updateSafetyHint();
+    return;
+  }
+
+  const preset = TRACER_PRESETS[key] || TRACER_PRESETS.logo;
+  state.currentPreset = key;
+  els.presetSelect.value = key;
+  els.traceWidthInput.value = preset.traceWidth;
+  els.thresholdInput.value = preset.threshold;
+  els.fillColorInput.value = preset.fillColor;
+  els.invertInput.checked = preset.invert;
+  els.transparentInput.checked = preset.transparent;
+
+  updateThresholdLabel();
+  updateTraceWidthLabel();
+  updateSafetyHint();
+}
+
+function markCustomPreset() {
+  if (state.currentPreset !== "custom") {
+    state.currentPreset = "custom";
+    els.presetSelect.value = "custom";
+  }
 }
 
 async function handleFile(file) {
@@ -142,6 +246,7 @@ async function handleFile(file) {
 
     els.traceBtn.disabled = false;
     els.progressText.textContent = "File siap ditrace.";
+    updateSafetyHint();
     showToast("File berhasil dibaca.");
   } catch (error) {
     console.error(error);
@@ -185,8 +290,11 @@ async function traceCurrentFile() {
     els.outputPreview.parentElement.classList.add("has-image");
     els.outputLabel.textContent = `${state.outputName} · ${result.meta.width} × ${result.meta.height}`;
 
+    const recommendation = getRecommendation(result.meta, result.blob.size);
+    updateSafetyBox(recommendation);
+
     els.reportBox.classList.remove("empty");
-    els.reportBox.innerHTML = renderReport(result.meta, state.outputName, result.blob.size);
+    els.reportBox.innerHTML = renderReport(result.meta, state.outputName, result.blob.size, recommendation);
 
     els.snippetOutput.textContent = state.snippet;
     els.downloadBtn.disabled = false;
@@ -202,57 +310,133 @@ async function traceCurrentFile() {
   }
 }
 
-function renderReport(meta, outputName, outputSize) {
+function renderReport(meta, outputName, outputSize, recommendation) {
   const originalSize = state.file?.size || 0;
   const saving = originalSize && outputSize
     ? Math.max(0, (1 - outputSize / originalSize) * 100)
     : 0;
 
-  const status = getRecommendation(meta, outputSize);
+  const ratio = originalSize ? outputSize / originalSize : 0;
 
   return `
     <table class="report-table">
       <tbody>
+        <tr><th scope="row">Preset</th><td>${escapeHtml(getPresetLabel())}</td></tr>
         <tr><th scope="row">Nama file asli</th><td>${escapeHtml(state.file.name)}</td></tr>
         <tr><th scope="row">Dimensi asli</th><td>${meta.sourceWidth} × ${meta.sourceHeight}px</td></tr>
         <tr><th scope="row">Ukuran asli</th><td>${formatBytes(originalSize)}</td></tr>
         <tr><th scope="row">Nama output</th><td>${escapeHtml(outputName)}</td></tr>
         <tr><th scope="row">Dimensi SVG</th><td>${meta.width} × ${meta.height} viewBox</td></tr>
         <tr><th scope="row">Ukuran SVG</th><td>${formatBytes(outputSize)}</td></tr>
+        <tr><th scope="row">Rasio SVG vs file asli</th><td>${(ratio * 100).toFixed(1)}%</td></tr>
         <tr><th scope="row">Path segment</th><td>${meta.runCount}</td></tr>
-        <tr><th scope="row">Pixel aktif</th><td>${meta.activePixelCount}</td></tr>
+        <tr><th scope="row">Pixel aktif</th><td>${meta.activePixelCount} (${(meta.activeRatio * 100).toFixed(1)}%)</td></tr>
+        <tr><th scope="row">Estimasi variasi warna</th><td>${meta.colorBucketCount} bucket</td></tr>
         <tr><th scope="row">Penghematan vs file asli</th><td>${saving.toFixed(1)}%</td></tr>
-        <tr><th scope="row">Status rekomendasi</th><td><span class="status-pill ${status.className}">${status.label}</span><br><small>${status.note}</small></td></tr>
+        <tr><th scope="row">Safety guard</th><td>${renderSafetyList(recommendation)}</td></tr>
+        <tr><th scope="row">Status rekomendasi</th><td><span class="status-pill ${recommendation.className}">${recommendation.label}</span><br><small>${recommendation.note}</small></td></tr>
       </tbody>
     </table>
     <div class="note-box">
-      Jika path segment terlalu besar atau SVG lebih berat dari WebP, turunkan lebar tracing atau gunakan Image Tool.
+      ${escapeHtml(recommendation.nextAction)}
     </div>
   `;
 }
 
 function getRecommendation(meta, outputSize) {
-  if (meta.runCount <= 2500 && outputSize <= 180 * 1024) {
+  const originalSize = state.file?.size || 0;
+  const ratio = originalSize ? outputSize / originalSize : 1;
+  const issues = [];
+
+  if (meta.runCount > 8000) issues.push("Path segment sangat banyak.");
+  else if (meta.runCount > 3500) issues.push("Path segment cukup banyak.");
+
+  if (meta.colorBucketCount > 180) issues.push("Gambar tampak memiliki banyak variasi warna.");
+  else if (meta.colorBucketCount > 80) issues.push("Variasi warna sedang; cek visual hasil.");
+
+  if (ratio > 1) issues.push("SVG lebih besar dari file asli.");
+  else if (ratio > 0.75) issues.push("Ukuran SVG belum jauh lebih ringan.");
+
+  if (meta.activeRatio > 0.72) issues.push("Area aktif sangat padat; SVG bisa berat dirender.");
+
+  if (meta.runCount <= 2500 && outputSize <= 180 * 1024 && meta.colorBucketCount <= 80 && ratio <= 0.75) {
     return {
       label: "Cocok untuk SVG",
       className: "status-ready",
-      note: "Jumlah path masih ringan untuk ikon/logo sederhana."
+      note: "Output relatif ringan dan kompleksitas masih aman.",
+      issues,
+      nextAction: "Hasil layak digunakan sebagai SVG eksternal. Tetap cek visual sebelum masuk repository."
     };
   }
 
-  if (meta.runCount <= 8000 && outputSize <= 512 * 1024) {
+  if (meta.runCount <= 8000 && outputSize <= 512 * 1024 && ratio <= 1 && meta.colorBucketCount <= 180) {
     return {
       label: "Perlu cek visual",
       className: "status-check",
-      note: "Masih bisa dipakai, tetapi cek ukuran dan rendering di HP."
+      note: "Masih bisa dipakai, tetapi perlu cek ukuran, detail visual, dan rendering di HP.",
+      issues,
+      nextAction: "Coba bandingkan dengan WebP dari Image Tool. Jika SVG terlihat baik dan ukurannya lebih kecil, boleh dipakai."
     };
   }
 
   return {
     label: "Tidak disarankan",
     className: "status-risk",
-    note: "Terlalu kompleks untuk SVG. Lebih baik gunakan WebP/JPG/PNG."
+    note: "Gambar terlalu kompleks untuk SVG path ringan.",
+    issues,
+    nextAction: "Gunakan Image Tool untuk output WebP/JPG/PNG, atau turunkan lebar tracing dan naik/turunkan threshold."
   };
+}
+
+function renderSafetyList(recommendation) {
+  if (!recommendation.issues.length) {
+    return `<span class="status-pill status-ready">Tidak ada isu utama</span>`;
+  }
+
+  return `
+    <ul class="safety-issue-list">
+      ${recommendation.issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function updateSafetyHint() {
+  const presetLabel = getPresetLabel();
+  const width = Number(els.traceWidthInput.value);
+  let level = "Aman";
+  let className = "status-ready";
+  let note = "Cocok untuk uji awal logo/ikon sederhana.";
+
+  if (width >= 512) {
+    level = "Perlu cek visual";
+    className = "status-check";
+    note = "Lebar tracing cukup tinggi. Hasil lebih detail, tetapi SVG bisa membesar.";
+  }
+
+  if (width >= 768) {
+    level = "Berisiko berat";
+    className = "status-risk";
+    note = "Lebar tracing tinggi. Gunakan hanya untuk uji detail, bukan default produksi.";
+  }
+
+  els.safetyBox.innerHTML = `
+    <strong>Safety guard:</strong>
+    <span class="status-pill ${className}">${level}</span>
+    Preset: ${escapeHtml(presetLabel)}. ${escapeHtml(note)}
+  `;
+}
+
+function updateSafetyBox(recommendation) {
+  els.safetyBox.innerHTML = `
+    <strong>Safety guard:</strong>
+    <span class="status-pill ${recommendation.className}">${recommendation.label}</span>
+    ${escapeHtml(recommendation.note)}
+  `;
+}
+
+function getPresetLabel() {
+  if (state.currentPreset === "custom") return "Custom/manual";
+  return TRACER_PRESETS[state.currentPreset]?.label || "Logo sederhana";
 }
 
 function buildSnippet(filename, meta) {
@@ -333,15 +517,9 @@ function resetApp() {
   els.originalPreview.parentElement.classList.remove("has-image");
   els.originalLabel.textContent = "Belum ada gambar.";
   els.outputNameInput.value = "";
-  els.traceWidthInput.value = 256;
-  els.thresholdInput.value = 128;
-  els.fillColorInput.value = "#111827";
-  els.invertInput.checked = false;
-  els.transparentInput.checked = true;
+  applyPreset("logo");
   els.traceBtn.disabled = true;
   els.progressText.textContent = "";
-  updateThresholdLabel();
-  updateTraceWidthLabel();
 }
 
 function releaseUrl(key) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Raster to SVG Tracer — Web Asset Prep Tool v1-R5-R1</title>
+  <title>Raster to SVG Tracer — Web Asset Prep Tool v1-R5-R2</title>
   <meta name="description" content="Modul eksperimental untuk tracing JPG/PNG/WebP sederhana menjadi SVG path/vector.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -59,11 +59,23 @@
       <div class="panel-header">
         <div>
           <h2 id="settings-title">2. Atur tracing</h2>
-          <p>Mode awal memakai monochrome threshold dan menghasilkan path SVG berbasis grid.</p>
+          <p>Pilih preset agar tracing lebih aman. Mode awal tetap monochrome threshold dan menghasilkan path SVG berbasis grid.</p>
         </div>
       </div>
 
       <form class="settings-grid">
+        <label>
+          Preset tracing
+          <select id="tracerPresetSelect">
+            <option value="icon">Ikon sederhana — aman</option>
+            <option value="logo" selected>Logo sederhana — seimbang</option>
+            <option value="flat">Ilustrasi flat — detail sedang</option>
+            <option value="detail">Detail tinggi — perlu cek visual</option>
+            <option value="custom">Custom/manual</option>
+          </select>
+          <small class="field-help">Preset membantu menjaga hasil SVG tidak terlalu berat.</small>
+        </label>
+
         <label>
           Nama file output
           <input id="outputNameInput" type="text" placeholder="contoh: logo-vector">
@@ -103,8 +115,15 @@
         </label>
       </form>
 
+
+      <div id="tracerSafetyBox" class="safety-box" aria-live="polite">
+        <strong>Safety guard:</strong>
+        Mulai dari preset aman. Jika hasil terlalu kompleks, turunkan lebar tracing atau gunakan Image Tool dengan output WebP.
+      </div>
+
       <div class="action-row">
         <button id="traceBtn" class="primary" type="button" disabled>Trace ke SVG</button>
+        <button id="safePresetBtn" type="button">Gunakan setting aman</button>
         <button id="downloadSvgBtn" type="button" disabled>Download SVG</button>
         <button id="copySnippetBtn" type="button" disabled>Copy snippet</button>
         <button id="resetBtn" type="button">Reset</button>

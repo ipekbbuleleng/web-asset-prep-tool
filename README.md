@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R1 — Raster Tracer Width Slider UX
+# Web Asset Prep Tool v1-R5-R2 — Raster Tracer Preset, Safety Guard & Output Quality Polish
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -245,3 +245,38 @@ Catatan:
 - Untuk ikon/logo sederhana, mulai dari 256 px atau 384 px.
 - Untuk logo yang lebih besar, 512 px sering cukup.
 - 1024 px hanya untuk uji detail, bukan default yang disarankan.
+
+
+## Perbaikan v1-R5-R2 — Raster Tracer Preset, Safety Guard & Output Quality Polish
+
+Paket ini memoles modul Raster to SVG Tracer agar lebih aman untuk pengguna awam.
+
+Tambahan:
+- Preset tracing:
+  ```text
+  Ikon sederhana
+  Logo sederhana
+  Ilustrasi flat
+  Detail tinggi
+  Custom/manual
+  ```
+- Tombol `Gunakan setting aman`.
+- Safety guard real-time berdasarkan lebar tracing.
+- Safety guard hasil berdasarkan:
+  - jumlah path segment,
+  - ukuran SVG,
+  - rasio SVG terhadap file asli,
+  - estimasi variasi warna,
+  - kepadatan pixel aktif.
+- Laporan tracing lebih rinci.
+- Rekomendasi hasil:
+  ```text
+  Cocok untuk SVG
+  Perlu cek visual
+  Tidak disarankan
+  ```
+
+Catatan:
+- Jika status `Tidak disarankan`, gunakan Image Tool dan output WebP/JPG/PNG.
+- Jika status `Perlu cek visual`, bandingkan hasil SVG dengan WebP dari Image Tool.
+- Raster to SVG tetap eksperimental dan sebaiknya hanya untuk logo/ikon/ilustrasi sederhana.
