@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SVG Optimizer Ringan — Web Asset Prep Tool v1-R4</title>
+  <meta name="description" content="Modul lokal untuk optimasi ringan SVG sebelum digunakan di web/PWA.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">MODUL SVG OPTIMIZER RINGAN</p>
+      <h1>SVG Optimizer</h1>
+      <p class="lead">
+        Optimasi ringan file SVG untuk logo, ikon, ilustrasi vektor, dan asset hasil desain sebelum masuk repository web/PWA.
+      </p>
+    </div>
+    <a class="module-link secondary" href="./index.html">Kembali ke Image Tool</a>
+  </header>
+
+  <main class="app-shell">
+    <section class="panel upload-panel" aria-labelledby="upload-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="upload-title">1. Upload SVG</h2>
+          <p>Pilih satu atau banyak file `.svg`. Proses berjalan lokal di browser.</p>
+        </div>
+      </div>
+
+      <label id="svgDropZone" class="drop-zone" for="svgFileInput">
+        <input id="svgFileInput" type="file" accept="image/svg+xml,.svg" multiple>
+        <span class="drop-icon" aria-hidden="true">⇪</span>
+        <strong>Tarik SVG ke sini atau klik untuk memilih file</strong>
+        <small>Cocok untuk logo, ikon, ilustrasi flat, dan output desain dari Figma/Inkscape/Illustrator.</small>
+      </label>
+
+      <div id="svgFileInfo" class="file-info empty">
+        Belum ada SVG dipilih.
+      </div>
+    </section>
+
+    <section class="panel settings-panel" aria-labelledby="settings-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="settings-title">2. Opsi optimasi</h2>
+          <p>viewBox selalu dipertahankan. Untuk SVG dengan gradient/mask, pertahankan ID.</p>
+        </div>
+      </div>
+
+      <div class="svg-options">
+        <div class="svg-options-grid">
+          <label class="check-row">
+            <input id="removeCommentsInput" type="checkbox" checked>
+            <span>Hapus komentar</span>
+          </label>
+          <label class="check-row">
+            <input id="removeMetadataInput" type="checkbox" checked>
+            <span>Hapus metadata/editor tag</span>
+          </label>
+          <label class="check-row">
+            <input id="keepTitleDescInput" type="checkbox" checked>
+            <span>Pertahankan title/desc aksesibilitas</span>
+          </label>
+          <label class="check-row">
+            <input id="keepIdsInput" type="checkbox" checked>
+            <span>Pertahankan id untuk gradient/mask</span>
+          </label>
+        </div>
+        <p class="field-help">
+          Script, event handler, dan javascript URL dibersihkan sebagai keamanan dasar. Ini bukan pengganti sanitizer SVG enterprise.
+        </p>
+      </div>
+
+      <div class="action-row">
+        <button id="processSvgBtn" class="primary" type="button" disabled>Optimasi SVG</button>
+        <button id="downloadSvgBtn" type="button" disabled>Download hasil</button>
+        <button id="copySvgSnippetBtn" type="button" disabled>Copy semua snippet</button>
+        <button id="resetSvgBtn" type="button">Reset</button>
+        <span id="svgProgressText" class="progress-text"></span>
+      </div>
+    </section>
+
+    <section class="preview-grid" aria-label="Preview SVG">
+      <article class="panel preview-card">
+        <div class="panel-header compact">
+          <h2>3. Preview original</h2>
+          <small id="originalSvgLabel" class="preview-label">Preview file pertama.</small>
+        </div>
+        <div class="preview-box">
+          <img id="originalSvgPreview" alt="Preview SVG asli">
+          <span>Belum ada SVG.</span>
+        </div>
+      </article>
+
+      <article class="panel preview-card">
+        <div class="panel-header compact">
+          <h2>4. Preview output</h2>
+          <small id="outputSvgLabel" class="preview-label">Hasil akan tampil setelah diproses.</small>
+        </div>
+        <div class="preview-box">
+          <img id="outputSvgPreview" alt="Preview SVG hasil optimasi">
+          <span>Hasil akan tampil setelah diproses.</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel report-panel" aria-labelledby="report-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="report-title">5. Laporan SVG</h2>
+          <p>Bandingkan ukuran, viewBox, title/desc, dan snippet hasil.</p>
+        </div>
+      </div>
+
+      <div id="svgReportBox" class="report-box empty">
+        Laporan belum tersedia.
+      </div>
+    </section>
+
+    <section class="panel snippet-panel" aria-labelledby="snippet-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="snippet-title">6. HTML snippet</h2>
+          <p>SVG direkomendasikan dipakai sebagai file eksternal melalui tag <code>&lt;img&gt;</code> untuk asset umum.</p>
+        </div>
+      </div>
+
+      <pre class="code-box"><code id="svgSnippetOutput">&lt;!-- Snippet SVG akan muncul setelah diproses --&gt;</code></pre>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>SVG cocok untuk logo, ikon, diagram sederhana, dan ilustrasi vektor. Foto tetap lebih tepat memakai WebP/AVIF/JPG.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./js/svgApp.js"></script>
+</body>
+</html>

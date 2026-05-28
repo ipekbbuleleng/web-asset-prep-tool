@@ -1,7 +1,7 @@
 {
   "name": "Web Asset Prep Tool",
   "short_name": "Asset Prep",
-  "description": "PWA lokal untuk menyiapkan aset gambar siap web dengan batch processing.",
+  "description": "PWA lokal untuk optimasi gambar, responsive image, batch ZIP, dan SVG ringan.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
