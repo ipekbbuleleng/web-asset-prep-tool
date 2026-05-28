@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.4-svg";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.4-r1-portal";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,9 @@ const APP_SHELL = [
   "./js/heicAdapter.js",
   "./js/downloadHelper.js",
   "./js/reportHelper.js",
+  "./image.html",
+  "./video.html",
+  "./office.html",
   "./svg.html",
   "./js/svgApp.js",
   "./js/svgProcessor.js",

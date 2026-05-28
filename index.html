@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Web Asset Prep Tool v1-R4</title>
-  <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
+  <title>Web Asset Prep Tool v1-R4-R1</title>
+  <meta name="description" content="Portal PWA lokal untuk menyiapkan aset web: image/vector, video/animation, dan document/office.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
@@ -12,191 +12,98 @@
   <link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
-  <noscript>Aplikasi ini membutuhkan JavaScript untuk memproses gambar di browser.</noscript>
-
-  <header class="app-header">
+  <header class="app-header portal-header">
     <div>
       <p class="eyebrow">PWA LOKAL TANPA BACKEND</p>
       <h1>Web Asset Prep Tool</h1>
       <p class="lead">
-        Siapkan aset gambar sebelum masuk repository web, PWA, landing page, dashboard, atau portal publik.
+        Portal persiapan aset untuk web, PWA, landing page, dashboard, portal publik, dan sistem internal.
+        Pilih modul sesuai jenis file agar aplikasi tetap ringan dan tidak memuat semua fitur sekaligus.
       </p>
     </div>
     <div class="header-badge" aria-label="Status aplikasi">
       <span class="dot"></span>
-      v1-R4 SVG
+      v1-R4-R1 portal
     </div>
   </header>
 
-  <main class="app-shell">
-
-    <section class="panel module-nav" aria-labelledby="module-nav-title">
+  <main class="app-shell portal-shell">
+    <section class="panel portal-intro" aria-labelledby="intro-title">
       <div>
-        <h2 id="module-nav-title">Modul tambahan</h2>
-        <p>Gunakan modul SVG untuk logo, ikon, ilustrasi vektor, dan asset hasil desain.</p>
-      </div>
-      <a class="module-link" href="./svg.html">Buka SVG Optimizer Ringan</a>
-    </section>
-
-    <section class="panel upload-panel" aria-labelledby="upload-title">
-      <div class="panel-header">
-        <div>
-          <h2 id="upload-title">1. Upload aset</h2>
-          <p>Pilih satu atau banyak file JPG, PNG, WebP, HEIC, atau HEIF. Semua proses berjalan lokal di browser.</p>
-        </div>
-      </div>
-
-      <label id="dropZone" class="drop-zone" for="fileInput">
-        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
-        <span class="drop-icon" aria-hidden="true">⇪</span>
-        <strong>Tarik gambar ke sini atau klik untuk memilih file</strong>
-        <small>Batch upload sudah didukung. HEIC/HEIF akan dibaca melalui decoder tambahan.</small>
-      </label>
-
-      <div id="fileInfo" class="file-info empty">
-        Belum ada file dipilih.
-      </div>
-
-      <div id="batchList" class="batch-list empty">
-        Daftar batch akan muncul setelah file dipilih.
+        <h2 id="intro-title">Pilih modul kerja</h2>
+        <p>
+          Halaman awal ini hanya berfungsi sebagai landing page. Modul berat seperti image processor,
+          SVG optimizer, video helper, dan office extractor dibuka terpisah agar performa tetap aman,
+          terutama di HP.
+        </p>
       </div>
     </section>
 
-    <section class="panel settings-panel" aria-labelledby="settings-title">
-      <div class="panel-header">
-        <div>
-          <h2 id="settings-title">2. Atur output</h2>
-          <p>Pilih preset atau atur manual. Pada batch, nama file asli tetap dipakai dan suffix ditambahkan otomatis.</p>
-        </div>
-      </div>
-
-      <form id="settingsForm" class="settings-grid">
-        <label>
-          Preset
-          <select id="presetSelect">
-            <option value="custom">Custom/manual</option>
-            <option value="activity">Foto Kegiatan — 1200 WebP q80</option>
-            <option value="thumb">Thumbnail Kegiatan — 480 WebP q75</option>
-            <option value="profile">Foto Profil — 512 WebP q80</option>
-            <option value="hero">Hero Landing Page — responsive 480/800/1200/1600</option>
-            <option value="screenshot">Screenshot Aplikasi — 1200 WebP q85</option>
-          </select>
-        </label>
-
-        <label>
-          Nama file output / suffix batch
-          <input id="outputNameInput" type="text" placeholder="contoh: hero">
-          <small class="field-help">Single file: nama dasar output. Batch: suffix yang ditambahkan ke nama file asli.</small>
-        </label>
-
-        <label>
-          Lebar output tunggal
-          <div class="inline-control">
-            <input id="widthInput" type="number" min="64" max="5000" step="1" value="1200">
-            <span>px</span>
-          </div>
-        </label>
-
-        <label>
-          Format output
-          <select id="formatSelect">
-            <option value="image/webp">WebP</option>
-            <option value="image/jpeg">JPG</option>
-            <option value="image/png">PNG</option>
-          </select>
-        </label>
-
-        <label class="quality-field">
-          Quality
-          <div class="range-row">
-            <input id="qualityInput" type="range" min="40" max="100" step="1" value="80">
-            <output id="qualityOutput">80</output>
-          </div>
-        </label>
-
-        <label>
-          Alt text untuk HTML
-          <input id="altInput" type="text" placeholder="Deskripsi gambar untuk aksesibilitas">
-        </label>
-
-        <label class="check-row">
-          <input id="preventUpscaleInput" type="checkbox" checked>
-          <span>Jangan perbesar gambar kecil</span>
-        </label>
-
-        <label class="check-row responsive-toggle">
-          <input id="responsiveModeInput" type="checkbox">
-          <span>Aktifkan Responsive Image Generator</span>
-        </label>
-
-        <label>
-          Daftar width responsive
-          <input id="responsiveWidthsInput" type="text" value="480, 800, 1200" placeholder="contoh: 480, 800, 1200">
-          <small class="field-help">Pisahkan dengan koma. Maksimum 8 varian per file agar tetap ringan.</small>
-        </label>
-
-        <label>
-          Nilai sizes untuk HTML
-          <input id="sizesInput" type="text" value="(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px" placeholder="contoh: (max-width: 600px) 480px, 1200px">
-          <small class="field-help">Digunakan pada snippet <code>&lt;picture&gt;</code> atau <code>srcset</code>.</small>
-        </label>
-      </form>
-
-      <div class="action-row">
-        <button id="processBtn" class="primary" type="button" disabled>Proses gambar</button>
-        <button id="downloadBtn" type="button" disabled>Download hasil</button>
-        <button id="resetBtn" type="button">Reset</button>
-        <span id="progressText" class="progress-text"></span>
-      </div>
-    </section>
-
-    <section class="preview-grid" aria-label="Preview gambar">
-      <article class="panel preview-card">
-        <div class="panel-header compact">
-          <h2>3. Preview original</h2>
-          <small id="originalPreviewLabel" class="preview-label">Preview file pertama.</small>
-        </div>
-        <div class="preview-box">
-          <img id="originalPreview" alt="Preview gambar asli">
-          <span id="originalEmpty">Belum ada gambar.</span>
+    <section class="module-grid" aria-label="Daftar modul Web Asset Prep Tool">
+      <article class="panel module-card module-card-active">
+        <div class="module-icon" aria-hidden="true">IMG</div>
+        <p class="eyebrow">Modul aktif</p>
+        <h2>Image & Vector Prep</h2>
+        <p>
+          Optimasi JPG, PNG, WebP, HEIC/HEIF, responsive image, batch ZIP, dan SVG Optimizer Ringan.
+        </p>
+        <ul class="module-feature-list">
+          <li>Image converter ke WebP/JPG/PNG</li>
+          <li>Batch responsive image generator</li>
+          <li>SVG optimizer ringan</li>
+          <li>ZIP output + snippet HTML</li>
+        </ul>
+        <div class="module-actions">
+          <a class="module-link" href="./image.html">Buka Image Tool</a>
+          <a class="module-link secondary" href="./svg.html">Buka SVG Tool</a>
         </div>
       </article>
 
-      <article class="panel preview-card">
-        <div class="panel-header compact">
-          <h2>4. Preview output</h2>
-          <small id="outputPreviewLabel" class="preview-label">Hasil akan tampil setelah diproses.</small>
+      <article class="panel module-card">
+        <div class="module-icon" aria-hidden="true">VID</div>
+        <p class="eyebrow">Fondasi modul</p>
+        <h2>Video & Animation Prep</h2>
+        <p>
+          Modul persiapan video dan animasi. Tahap awal akan difokuskan pada metadata, poster image,
+          thumbnail, dan snippet video.
+        </p>
+        <ul class="module-feature-list">
+          <li>Video metadata checker</li>
+          <li>Poster/thumbnail generator</li>
+          <li>Snippet <code>&lt;video&gt;</code></li>
+          <li>GIF/WebP animation helper</li>
+        </ul>
+        <div class="module-actions">
+          <a class="module-link secondary" href="./video.html">Buka Modul Video</a>
         </div>
-        <div class="preview-box">
-          <img id="outputPreview" alt="Preview gambar hasil optimasi">
-          <span id="outputEmpty">Hasil akan tampil setelah diproses.</span>
+      </article>
+
+      <article class="panel module-card">
+        <div class="module-icon" aria-hidden="true">DOC</div>
+        <p class="eyebrow">Fondasi modul</p>
+        <h2>Document & Office Prep</h2>
+        <p>
+          Modul untuk mengubah dokumen menjadi konten siap web, seperti teks, HTML sederhana,
+          tabel, JSON, atau snippet.
+        </p>
+        <ul class="module-feature-list">
+          <li>PDF text extractor</li>
+          <li>DOCX to HTML/text</li>
+          <li>XLSX/CSV to table/JSON</li>
+          <li>PDF thumbnail helper</li>
+        </ul>
+        <div class="module-actions">
+          <a class="module-link secondary" href="./office.html">Buka Modul Office</a>
         </div>
       </article>
     </section>
 
-    <section class="panel report-panel" aria-labelledby="report-title">
-      <div class="panel-header">
-        <div>
-          <h2 id="report-title">5. Laporan optimasi</h2>
-          <p>Bandingkan ukuran, dimensi, jumlah output, dan status kesiapan web.</p>
-        </div>
-      </div>
-
-      <div id="reportBox" class="report-box empty">
-        Laporan belum tersedia.
-      </div>
-    </section>
-
-    <section class="panel snippet-panel" aria-labelledby="snippet-title">
-      <div class="panel-header">
-        <div>
-          <h2 id="snippet-title">6. HTML snippet</h2>
-          <p>Untuk batch, snippet dibuat per file dan bisa disalin satu per satu dari tabel batch.</p>
-        </div>
-        <button id="copySnippetBtn" type="button" disabled>Copy</button>
-      </div>
-
-      <pre class="code-box"><code id="snippetOutput">&lt;!-- Snippet akan muncul setelah gambar diproses --&gt;</code></pre>
+    <section class="panel portal-note" aria-labelledby="architecture-title">
+      <h2 id="architecture-title">Prinsip arsitektur</h2>
+      <p>
+        Modul dipisah agar halaman awal tidak memuat semua library berat. Untuk pengembangan lanjutan,
+        video processing, OCR, dan konversi Office kompleks sebaiknya memakai Web Worker atau backend hybrid.
+      </p>
     </section>
   </main>
 
@@ -206,8 +113,14 @@
     </p>
   </footer>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script type="module" src="./js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./sw.js").catch(function (error) {
+          console.warn("Service worker gagal didaftarkan:", error);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

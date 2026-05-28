@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Document & Office Prep — Web Asset Prep Tool</title>
+  <meta name="description" content="Fondasi modul Document & Office Prep untuk Web Asset Prep Tool.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">FONDASI MODUL</p>
+      <h1>Document & Office Prep</h1>
+      <p class="lead">
+        Modul ini disiapkan untuk mengubah dokumen menjadi konten siap web, seperti teks bersih,
+        HTML sederhana, tabel, CSV, JSON, atau snippet yang bisa ditempel ke repository.
+      </p>
+    </div>
+    <div class="module-actions">
+      <a class="module-link secondary" href="./index.html">Kembali ke Portal</a>
+      <a class="module-link" href="./image.html">Buka Image Tool</a>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="panel portal-intro">
+      <h2>Rencana fitur modul dokumen</h2>
+      <div class="module-feature-columns">
+        <div>
+          <h3>Dokumen teks digital</h3>
+          <ul class="module-feature-list">
+            <li>PDF text extractor</li>
+            <li>DOCX to HTML/text</li>
+            <li>XLSX/CSV to table/JSON</li>
+            <li>Markdown helper</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Dokumen visual/scan</h3>
+          <ul class="module-feature-list">
+            <li>PDF thumbnail halaman pertama</li>
+            <li>Preview halaman PDF</li>
+            <li>OCR opsional</li>
+            <li>Backend hybrid untuk dokumen besar</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel portal-note">
+      <h2>Catatan teknis</h2>
+      <p>
+        PDF scan dan OCR cukup berat untuk HP. Karena itu modul Office sebaiknya dimulai dari extract text
+        dokumen digital terlebih dahulu, bukan OCR besar.
+      </p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Modul office belum memproses file pada v1-R4-R1. Ini adalah fondasi navigasi dan arsitektur.</p>
+  </footer>
+</body>
+</html>
