@@ -572,3 +572,14 @@ input[type="range"] { padding: 0; accent-color: var(--brand); }
     grid-template-columns: 1fr;
   }
 }
+
+
+.warning-panel {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.42), rgba(255, 255, 255, 0.94));
+}
+.warning-panel p {
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 0;
+}

@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R4-R1 — Landing Page Portal 3 Modul
+# Web Asset Prep Tool v1-R5 — Raster to SVG Tracer Eksperimental
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -183,3 +183,43 @@ Tujuan:
 Catatan:
 - `video.html` dan `office.html` pada paket ini masih berupa fondasi/placeholder.
 - Pemrosesan video dan dokumen akan ditambahkan pada paket berikutnya secara bertahap.
+
+
+## Tambahan v1-R5 — Raster to SVG Tracer Eksperimental
+
+Paket ini menambahkan modul baru:
+
+```text
+tracer.html
+js/tracerApp.js
+js/rasterTracer.js
+```
+
+Fungsi:
+- Upload JPG, PNG, WebP, HEIC, atau HEIF.
+- Trace raster sederhana menjadi SVG path/vector.
+- Mode awal: monochrome threshold.
+- Output SVG berbasis path.
+- Preview original dan SVG hasil trace.
+- Download SVG.
+- Generate snippet `<img>`.
+
+Gunakan hanya untuk:
+- logo sederhana;
+- ikon satu warna;
+- simbol;
+- ilustrasi flat;
+- gambar dengan sedikit warna.
+
+Tidak disarankan untuk:
+- foto kegiatan;
+- foto orang;
+- foto ruangan;
+- screenshot aplikasi;
+- banner fotografis;
+- gambar kompleks.
+
+Catatan teknis:
+- Semakin besar `Lebar tracing`, semakin detail hasilnya, tetapi file SVG bisa menjadi besar dan berat.
+- Jika laporan menunjukkan path segment terlalu banyak, gunakan WebP/JPG/PNG dari Image Tool.
+- Ini adalah tracer eksperimental berbasis browser, bukan pengganti vectorizer profesional.

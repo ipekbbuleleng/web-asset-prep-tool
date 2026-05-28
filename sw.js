@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.4-r1-portal";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.5-raster-tracer";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -15,6 +15,9 @@ const APP_SHELL = [
   "./svg.html",
   "./js/svgApp.js",
   "./js/svgProcessor.js",
+  "./tracer.html",
+  "./js/tracerApp.js",
+  "./js/rasterTracer.js",
   "./assets/icons/icon.svg",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png"

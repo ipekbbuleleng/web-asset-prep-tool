@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Raster to SVG Tracer — Web Asset Prep Tool v1-R5</title>
+  <meta name="description" content="Modul eksperimental untuk tracing JPG/PNG/WebP sederhana menjadi SVG path/vector.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">EKSPERIMENTAL · RASTER TO SVG</p>
+      <h1>Raster to SVG Tracer</h1>
+      <p class="lead">
+        Trace JPG/PNG/WebP/HEIC sederhana menjadi SVG path/vector. Gunakan hanya untuk logo sederhana,
+        ikon satu warna, simbol, ilustrasi flat, atau gambar dengan sedikit warna.
+      </p>
+    </div>
+    <div class="module-actions">
+      <a class="module-link secondary" href="./index.html">Kembali ke Portal</a>
+      <a class="module-link" href="./image.html">Buka Image Tool</a>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="panel warning-panel" aria-labelledby="warning-title">
+      <h2 id="warning-title">Batas penggunaan</h2>
+      <p>
+        Fitur ini bukan untuk foto kegiatan, foto orang, foto ruangan, screenshot aplikasi, banner fotografis,
+        atau gambar kompleks. Untuk foto, tetap gunakan Image Tool dan output WebP/JPG/PNG.
+      </p>
+    </section>
+
+    <section class="panel upload-panel" aria-labelledby="upload-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="upload-title">1. Upload raster sederhana</h2>
+          <p>Pilih JPG, PNG, WebP, HEIC, atau HEIF. Proses berjalan lokal di browser.</p>
+        </div>
+      </div>
+
+      <label id="tracerDropZone" class="drop-zone" for="tracerFileInput">
+        <input id="tracerFileInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif">
+        <span class="drop-icon" aria-hidden="true">⇪</span>
+        <strong>Tarik gambar sederhana ke sini atau klik untuk memilih file</strong>
+        <small>Disarankan: logo hitam-putih, ikon, simbol, stempel sederhana, atau ilustrasi flat.</small>
+      </label>
+
+      <div id="tracerFileInfo" class="file-info empty">
+        Belum ada file dipilih.
+      </div>
+    </section>
+
+    <section class="panel settings-panel" aria-labelledby="settings-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="settings-title">2. Atur tracing</h2>
+          <p>Mode awal memakai monochrome threshold dan menghasilkan path SVG berbasis grid.</p>
+        </div>
+      </div>
+
+      <form class="settings-grid">
+        <label>
+          Nama file output
+          <input id="outputNameInput" type="text" placeholder="contoh: logo-vector">
+        </label>
+
+        <label>
+          Lebar tracing
+          <div class="inline-control">
+            <input id="traceWidthInput" type="number" min="64" max="1024" step="1" value="256">
+            <span>px</span>
+          </div>
+          <small class="field-help">Semakin besar semakin detail, tetapi SVG bisa membesar dan berat.</small>
+        </label>
+
+        <label class="quality-field">
+          Threshold
+          <div class="range-row">
+            <input id="thresholdInput" type="range" min="0" max="255" step="1" value="128">
+            <output id="thresholdOutput">128</output>
+          </div>
+          <small class="field-help">Nilai lebih tinggi menangkap area lebih gelap lebih banyak.</small>
+        </label>
+
+        <label>
+          Warna path
+          <input id="fillColorInput" type="color" value="#111827">
+        </label>
+
+        <label class="check-row">
+          <input id="invertInput" type="checkbox">
+          <span>Invert tracing</span>
+        </label>
+
+        <label class="check-row">
+          <input id="transparentInput" type="checkbox" checked>
+          <span>Background transparan</span>
+        </label>
+      </form>
+
+      <div class="action-row">
+        <button id="traceBtn" class="primary" type="button" disabled>Trace ke SVG</button>
+        <button id="downloadSvgBtn" type="button" disabled>Download SVG</button>
+        <button id="copySnippetBtn" type="button" disabled>Copy snippet</button>
+        <button id="resetBtn" type="button">Reset</button>
+        <span id="progressText" class="progress-text"></span>
+      </div>
+    </section>
+
+    <section class="preview-grid" aria-label="Preview raster dan SVG">
+      <article class="panel preview-card">
+        <div class="panel-header compact">
+          <h2>3. Preview original</h2>
+          <small id="originalLabel" class="preview-label">Belum ada gambar.</small>
+        </div>
+        <div class="preview-box">
+          <img id="originalPreview" alt="Preview gambar raster">
+          <span>Belum ada gambar.</span>
+        </div>
+      </article>
+
+      <article class="panel preview-card">
+        <div class="panel-header compact">
+          <h2>4. Preview SVG hasil trace</h2>
+          <small id="outputLabel" class="preview-label">Hasil akan tampil setelah tracing.</small>
+        </div>
+        <div class="preview-box">
+          <img id="outputPreview" alt="Preview SVG hasil trace">
+          <span>Hasil akan tampil setelah tracing.</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel report-panel" aria-labelledby="report-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="report-title">5. Laporan tracing</h2>
+          <p>Bandingkan ukuran, dimensi, jumlah path segment, dan status rekomendasi.</p>
+        </div>
+      </div>
+
+      <div id="reportBox" class="report-box empty">
+        Laporan belum tersedia.
+      </div>
+    </section>
+
+    <section class="panel snippet-panel" aria-labelledby="snippet-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="snippet-title">6. HTML snippet</h2>
+          <p>SVG hasil tracing direkomendasikan dipakai sebagai file eksternal melalui tag <code>&lt;img&gt;</code>.</p>
+        </div>
+      </div>
+
+      <pre class="code-box"><code id="snippetOutput">&lt;!-- Snippet akan muncul setelah tracing --&gt;</code></pre>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Gunakan Raster to SVG hanya untuk asset sederhana. Untuk foto, gunakan Image Tool dan output WebP/JPG/PNG.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./js/tracerApp.js"></script>
+</body>
+</html>
