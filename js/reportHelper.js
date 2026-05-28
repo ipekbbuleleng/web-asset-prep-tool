@@ -44,7 +44,7 @@ export function buildRecommendation({ savingPercent, outputSize, outputWidth }) 
   };
 }
 
-export function renderReport({
+export function renderSingleReport({
   originalName,
   outputName,
   originalType,
@@ -93,11 +93,102 @@ export function renderReport({
   `;
 }
 
+export function renderResponsiveReport({
+  originalName,
+  originalType,
+  originalSize,
+  originalWidth,
+  originalHeight,
+  outputType,
+  widthsText,
+  outputs
+}) {
+  const totalSize = outputs.reduce((sum, item) => sum + item.size, 0);
+  const largest = outputs.reduce((best, item) => !best || item.width > best.width ? item : best, null);
+  const savingPercent = largest ? getSavingPercent(originalSize, largest.size) : 0;
+  const recommendation = buildRecommendation({
+    savingPercent,
+    outputSize: largest?.size || 0,
+    outputWidth: largest?.width || 0
+  });
+
+  return `
+    <table class="report-table">
+      <tbody>
+        <tr><th scope="row">Nama file asli</th><td>${escapeHtml(originalName)}</td></tr>
+        <tr><th scope="row">Format asli</th><td>${escapeHtml(originalType || "-")}</td></tr>
+        <tr><th scope="row">Ukuran asli</th><td>${formatBytes(originalSize)}</td></tr>
+        <tr><th scope="row">Dimensi asli</th><td>${originalWidth} × ${originalHeight}px</td></tr>
+        <tr><th scope="row">Mode output</th><td>Responsive Image Generator</td></tr>
+        <tr><th scope="row">Format output</th><td>${escapeHtml(outputType || "-")}</td></tr>
+        <tr><th scope="row">Daftar width</th><td>${escapeHtml(widthsText)}</td></tr>
+        <tr><th scope="row">Jumlah varian</th><td>${outputs.length} file</td></tr>
+        <tr><th scope="row">Total ukuran semua varian</th><td>${formatBytes(totalSize)}</td></tr>
+        <tr><th scope="row">Status rekomendasi</th><td><span class="status-pill ${recommendation.className}">${recommendation.label}</span><br><small>${recommendation.note}</small></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Detail varian output</h3>
+    <table class="variant-table">
+      <thead>
+        <tr>
+          <th>Nama output</th>
+          <th>Dimensi</th>
+          <th>Ukuran</th>
+          <th>Penghematan vs file asli</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${outputs.map((item) => `
+          <tr>
+            <td>${escapeHtml(item.name)}</td>
+            <td>${item.width} × ${item.height}px</td>
+            <td>${formatBytes(item.size)}</td>
+            <td>${getSavingPercent(originalSize, item.size).toFixed(1)}%</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <div class="note-box">
+      Gunakan tombol <strong>Download hasil</strong> untuk mengunduh semua varian sekaligus secara berurutan.
+    </div>
+  `;
+}
+
 export function buildImgSnippet({ filename, alt, width, height }) {
   const safeAlt = escapeAttribute(alt || "Deskripsi gambar");
   const safeFile = escapeAttribute(filename);
 
   return `<img src="./assets/images/${safeFile}" alt="${safeAlt}" width="${width}" height="${height}" loading="lazy" decoding="async">`;
+}
+
+export function buildPictureSnippet({ outputs, alt, sizes, mimeType }) {
+  const safeAlt = escapeAttribute(alt || "Deskripsi gambar");
+  const safeSizes = escapeAttribute(sizes || "100vw");
+  const ordered = [...outputs].sort((a, b) => a.width - b.width);
+  const fallback = pickFallbackVariant(ordered);
+
+  const srcset = ordered
+    .map((item) => `./assets/images/${escapeAttribute(item.name)} ${item.width}w`)
+    .join(",\n      ");
+
+  return `<picture>
+  <source
+    type="${escapeAttribute(mimeType)}"
+    srcset="
+      ${srcset}
+    "
+    sizes="${safeSizes}"
+  >
+  <img src="./assets/images/${escapeAttribute(fallback.name)}" alt="${safeAlt}" width="${fallback.width}" height="${fallback.height}" loading="lazy" decoding="async">
+</picture>`;
+}
+
+function pickFallbackVariant(outputs) {
+  if (outputs.length === 1) return outputs[0];
+  const preferred = outputs.find((item) => item.width >= 800);
+  return preferred || outputs[outputs.length - 1];
 }
 
 function escapeHtml(value) {

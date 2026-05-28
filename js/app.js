@@ -8,14 +8,17 @@ import {
 import {
   copyText,
   downloadBlob,
+  downloadMany,
   sanitizeFileBaseName,
   stripExtension
 } from "./downloadHelper.js";
 
 import {
   buildImgSnippet,
+  buildPictureSnippet,
   formatBytes,
-  renderReport
+  renderResponsiveReport,
+  renderSingleReport
 } from "./reportHelper.js";
 
 import {
@@ -24,7 +27,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.2-responsive";
 
 const PRESETS = {
   custom: null,
@@ -32,31 +35,38 @@ const PRESETS = {
     width: 1200,
     quality: 80,
     mimeType: "image/webp",
-    suffix: "kegiatan-1200"
+    suffix: "kegiatan",
+    responsiveMode: false
   },
   thumb: {
     width: 480,
     quality: 75,
     mimeType: "image/webp",
-    suffix: "kegiatan-thumb-480"
+    suffix: "kegiatan-thumb",
+    responsiveMode: false
   },
   profile: {
     width: 512,
     quality: 80,
     mimeType: "image/webp",
-    suffix: "profile-512"
+    suffix: "profile",
+    responsiveMode: false
   },
   hero: {
     width: 1200,
     quality: 80,
     mimeType: "image/webp",
-    suffix: "hero-1200"
+    suffix: "hero",
+    responsiveMode: true,
+    widths: "480, 800, 1200, 1600",
+    sizes: "(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px"
   },
   screenshot: {
     width: 1200,
     quality: 85,
     mimeType: "image/webp",
-    suffix: "screenshot-1200"
+    suffix: "screenshot",
+    responsiveMode: false
   }
 };
 
@@ -70,6 +80,7 @@ const state = {
   outputBlob: null,
   outputObjectUrl: null,
   outputName: "",
+  responsiveOutputs: [],
   snippet: ""
 };
 
@@ -85,14 +96,16 @@ const els = {
   qualityOutput: document.querySelector("#qualityOutput"),
   altInput: document.querySelector("#altInput"),
   preventUpscaleInput: document.querySelector("#preventUpscaleInput"),
+  responsiveModeInput: document.querySelector("#responsiveModeInput"),
+  responsiveWidthsInput: document.querySelector("#responsiveWidthsInput"),
+  sizesInput: document.querySelector("#sizesInput"),
   processBtn: document.querySelector("#processBtn"),
   downloadBtn: document.querySelector("#downloadBtn"),
   resetBtn: document.querySelector("#resetBtn"),
   copySnippetBtn: document.querySelector("#copySnippetBtn"),
   originalPreview: document.querySelector("#originalPreview"),
   outputPreview: document.querySelector("#outputPreview"),
-  originalEmpty: document.querySelector("#originalEmpty"),
-  outputEmpty: document.querySelector("#outputEmpty"),
+  outputPreviewLabel: document.querySelector("#outputPreviewLabel"),
   reportBox: document.querySelector("#reportBox"),
   snippetOutput: document.querySelector("#snippetOutput"),
   toast: document.querySelector("#toast")
@@ -104,7 +117,7 @@ function boot() {
   bindEvents();
   registerServiceWorker();
   updateQualityLabel();
-
+  syncResponsiveControls();
   console.info(`Web Asset Prep Tool v${APP_VERSION} aktif`);
 }
 
@@ -139,17 +152,19 @@ function bindEvents() {
   els.downloadBtn.addEventListener("click", downloadCurrentOutput);
   els.copySnippetBtn.addEventListener("click", copyCurrentSnippet);
   els.resetBtn.addEventListener("click", resetApp);
-
-  els.formatSelect.addEventListener("change", () => {
+  els.responsiveModeInput.addEventListener("change", () => {
+    syncResponsiveControls();
     if (state.file && !els.outputNameInput.value.trim()) {
       suggestOutputName();
     }
   });
 
-  els.widthInput.addEventListener("input", () => {
-    if (state.file && !els.outputNameInput.value.trim()) {
-      suggestOutputName();
-    }
+  [els.formatSelect, els.widthInput, els.responsiveWidthsInput].forEach((element) => {
+    element.addEventListener("input", () => {
+      if (state.file && !els.outputNameInput.value.trim()) {
+        suggestOutputName();
+      }
+    });
   });
 }
 
@@ -211,12 +226,25 @@ async function handleFile(file) {
 
 function applyPreset() {
   const preset = PRESETS[els.presetSelect.value];
-  if (!preset) return;
+  if (!preset) {
+    return;
+  }
 
   els.widthInput.value = preset.width;
   els.qualityInput.value = preset.quality;
   els.formatSelect.value = preset.mimeType;
+  els.responsiveModeInput.checked = !!preset.responsiveMode;
+
+  if (preset.widths) {
+    els.responsiveWidthsInput.value = preset.widths;
+  }
+
+  if (preset.sizes) {
+    els.sizesInput.value = preset.sizes;
+  }
+
   updateQualityLabel();
+  syncResponsiveControls();
 
   if (state.file) {
     const base = sanitizeFileBaseName(stripExtension(state.file.name));
@@ -224,13 +252,25 @@ function applyPreset() {
   }
 }
 
+function syncResponsiveControls() {
+  const isResponsive = els.responsiveModeInput.checked;
+  els.responsiveWidthsInput.disabled = !isResponsive;
+  els.sizesInput.disabled = !isResponsive;
+  els.widthInput.disabled = isResponsive;
+}
+
 function suggestOutputName() {
   if (!state.file) return;
 
   const base = sanitizeFileBaseName(stripExtension(state.file.name));
-  const width = Number(els.widthInput.value) || 1200;
   const ext = getOutputExtension(els.formatSelect.value);
 
+  if (els.responsiveModeInput.checked) {
+    els.outputNameInput.placeholder = `${base}-hero`;
+    return;
+  }
+
+  const width = Number(els.widthInput.value) || 1200;
   els.outputNameInput.placeholder = `${base}-${width}.${ext}`;
 }
 
@@ -244,14 +284,80 @@ async function processCurrentFile() {
   els.processBtn.textContent = "Memproses...";
 
   try {
+    const processingSource = state.processableFile || state.file;
     const mimeType = els.formatSelect.value;
     const ext = getOutputExtension(mimeType);
+    const responsiveMode = els.responsiveModeInput.checked;
     const baseName = sanitizeFileBaseName(
-      els.outputNameInput.value.trim() || `${stripExtension(state.file.name)}-${els.widthInput.value}`
+      els.outputNameInput.value.trim() ||
+      (responsiveMode ? `${stripExtension(state.file.name)}-responsive` : `${stripExtension(state.file.name)}-${els.widthInput.value}`)
     );
-    const outputName = `${baseName}.${ext}`;
 
-    const processingSource = state.processableFile || state.file;
+    if (responsiveMode) {
+      const widths = parseWidths(els.responsiveWidthsInput.value);
+
+      if (widths.length === 0) {
+        throw new Error("Isi daftar width responsive terlebih dahulu.");
+      }
+
+      const outputs = [];
+
+      for (const width of widths) {
+        const result = await processImageFile(processingSource, {
+          width,
+          quality: Number(els.qualityInput.value),
+          mimeType,
+          preventUpscale: els.preventUpscaleInput.checked
+        });
+
+        const outputWidth = result.outputMeta.width;
+        const filename = `${baseName}-${outputWidth}.${ext}`;
+        const objectUrl = URL.createObjectURL(result.blob);
+
+        outputs.push({
+          blob: result.blob,
+          name: filename,
+          width: result.outputMeta.width,
+          height: result.outputMeta.height,
+          size: result.outputMeta.size,
+          type: result.outputMeta.type,
+          objectUrl
+        });
+      }
+
+      clearOutputOnly();
+      state.responsiveOutputs = outputs;
+
+      const previewVariant = [...outputs].sort((a, b) => b.width - a.width)[0];
+      els.outputPreview.src = previewVariant.objectUrl;
+      els.outputPreview.parentElement.classList.add("has-image");
+      els.outputPreviewLabel.textContent = `Preview varian terbesar: ${previewVariant.width} × ${previewVariant.height}px`;
+
+      state.snippet = buildPictureSnippet({
+        outputs,
+        alt: els.altInput.value,
+        sizes: els.sizesInput.value,
+        mimeType
+      });
+
+      els.reportBox.classList.remove("empty");
+      els.reportBox.innerHTML = renderResponsiveReport({
+        originalName: state.file.name,
+        originalType: getReadableMimeLabel(state.file),
+        originalSize: state.file.size,
+        originalWidth: state.originalMeta.width,
+        originalHeight: state.originalMeta.height,
+        outputType: mimeType,
+        widthsText: widths.join(", "),
+        outputs
+      });
+
+      els.snippetOutput.textContent = state.snippet;
+      els.downloadBtn.disabled = false;
+      els.copySnippetBtn.disabled = false;
+      showToast(`Selesai: ${outputs.length} varian responsive dibuat.`);
+      return;
+    }
 
     const result = await processImageFile(processingSource, {
       width: Number(els.widthInput.value),
@@ -260,8 +366,9 @@ async function processCurrentFile() {
       preventUpscale: els.preventUpscaleInput.checked
     });
 
-    releaseObjectUrl("outputObjectUrl");
+    clearOutputOnly();
 
+    const outputName = `${baseName}.${ext}`;
     state.outputBlob = result.blob;
     state.outputObjectUrl = URL.createObjectURL(result.blob);
     state.outputName = outputName;
@@ -274,9 +381,10 @@ async function processCurrentFile() {
 
     els.outputPreview.src = state.outputObjectUrl;
     els.outputPreview.parentElement.classList.add("has-image");
+    els.outputPreviewLabel.textContent = `Preview output: ${result.outputMeta.width} × ${result.outputMeta.height}px`;
 
     els.reportBox.classList.remove("empty");
-    els.reportBox.innerHTML = renderReport({
+    els.reportBox.innerHTML = renderSingleReport({
       originalName: state.file.name,
       outputName,
       originalType: getReadableMimeLabel(state.file),
@@ -292,7 +400,6 @@ async function processCurrentFile() {
     els.snippetOutput.textContent = state.snippet;
     els.downloadBtn.disabled = false;
     els.copySnippetBtn.disabled = false;
-
     showToast(`Selesai: ${outputName}`);
   } catch (error) {
     console.error(error);
@@ -304,6 +411,12 @@ async function processCurrentFile() {
 }
 
 function downloadCurrentOutput() {
+  if (state.responsiveOutputs.length > 0) {
+    downloadMany(state.responsiveOutputs);
+    showToast("Mengunduh semua varian responsive...");
+    return;
+  }
+
   if (!state.outputBlob || !state.outputName) {
     showToast("Belum ada output untuk didownload.");
     return;
@@ -331,13 +444,21 @@ function updateQualityLabel() {
 function clearOutputOnly() {
   releaseObjectUrl("outputObjectUrl");
 
+  if (state.responsiveOutputs.length > 0) {
+    state.responsiveOutputs.forEach((item) => {
+      if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+    });
+  }
+
   state.outputBlob = null;
   state.outputObjectUrl = null;
   state.outputName = "";
+  state.responsiveOutputs = [];
   state.snippet = "";
 
   els.outputPreview.removeAttribute("src");
   els.outputPreview.parentElement.classList.remove("has-image");
+  els.outputPreviewLabel.textContent = "Hasil akan tampil setelah diproses.";
   els.reportBox.className = "report-box empty";
   els.reportBox.textContent = "Laporan belum tersedia.";
   els.snippetOutput.textContent = "<!-- Snippet akan muncul setelah gambar diproses -->";
@@ -354,7 +475,6 @@ function resetApp() {
   state.isHeicInput = false;
   state.heicNotice = "";
   state.originalMeta = null;
-  state.originalObjectUrl = null;
 
   els.fileInput.value = "";
   els.fileInfo.className = "file-info empty";
@@ -369,7 +489,23 @@ function resetApp() {
   els.formatSelect.value = "image/webp";
   els.qualityInput.value = 80;
   els.preventUpscaleInput.checked = true;
+  els.responsiveModeInput.checked = false;
+  els.responsiveWidthsInput.value = "480, 800, 1200";
+  els.sizesInput.value = "(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px";
+  syncResponsiveControls();
   updateQualityLabel();
+}
+
+function parseWidths(value) {
+  const unique = Array.from(new Set(
+    String(value || "")
+      .split(",")
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isFinite(item) && item >= 64 && item <= 5000)
+      .map((item) => Math.round(item))
+  ));
+
+  return unique.sort((a, b) => a - b).slice(0, 8);
 }
 
 function releaseObjectUrl(key) {

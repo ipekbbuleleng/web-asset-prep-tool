@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Web Asset Prep Tool v1</title>
-  <meta name="description" content="PWA lokal untuk resize, convert WebP, preview, laporan optimasi, dan generate HTML img snippet.">
+  <title>Web Asset Prep Tool v1-R2</title>
+  <meta name="description" content="PWA lokal untuk resize, convert WebP, dukungan HEIC, responsive image generator, laporan optimasi, dan generate HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
@@ -16,7 +16,7 @@
 
   <header class="app-header">
     <div>
-      <p class="eyebrow">PWA lokal tanpa backend</p>
+      <p class="eyebrow">PWA LOKAL TANPA BACKEND</p>
       <h1>Web Asset Prep Tool</h1>
       <p class="lead">
         Siapkan aset gambar sebelum masuk repository web, PWA, landing page, dashboard, atau portal publik.
@@ -24,7 +24,7 @@
     </div>
     <div class="header-badge" aria-label="Status aplikasi">
       <span class="dot"></span>
-      v1 siap-web
+      v1-R2 responsive
     </div>
   </header>
 
@@ -65,18 +65,18 @@
             <option value="activity">Foto Kegiatan — 1200 WebP q80</option>
             <option value="thumb">Thumbnail Kegiatan — 480 WebP q75</option>
             <option value="profile">Foto Profil — 512 WebP q80</option>
-            <option value="hero">Hero Landing Page — 1200 WebP q80</option>
+            <option value="hero">Hero Landing Page — responsive 480/800/1200/1600</option>
             <option value="screenshot">Screenshot Aplikasi — 1200 WebP q85</option>
           </select>
         </label>
 
         <label>
-          Nama file output
-          <input id="outputNameInput" type="text" placeholder="contoh: epkb-kegiatan-1200">
+          Nama file output / base name
+          <input id="outputNameInput" type="text" placeholder="contoh: epkb-kegiatan">
         </label>
 
         <label>
-          Lebar output
+          Lebar output tunggal
           <div class="inline-control">
             <input id="widthInput" type="number" min="64" max="5000" step="1" value="1200">
             <span>px</span>
@@ -109,6 +109,23 @@
           <input id="preventUpscaleInput" type="checkbox" checked>
           <span>Jangan perbesar gambar kecil</span>
         </label>
+
+        <label class="check-row responsive-toggle">
+          <input id="responsiveModeInput" type="checkbox">
+          <span>Aktifkan Responsive Image Generator</span>
+        </label>
+
+        <label>
+          Daftar width responsive
+          <input id="responsiveWidthsInput" type="text" value="480, 800, 1200" placeholder="contoh: 480, 800, 1200">
+          <small class="field-help">Pisahkan dengan koma. Maksimum 8 varian agar tetap ringan.</small>
+        </label>
+
+        <label>
+          Nilai sizes untuk HTML
+          <input id="sizesInput" type="text" value="(max-width: 600px) 480px, (max-width: 1024px) 800px, 1200px" placeholder="contoh: (max-width: 600px) 480px, 1200px">
+          <small class="field-help">Digunakan pada snippet <code>&lt;picture&gt;</code> atau <code>srcset</code>.</small>
+        </label>
       </form>
 
       <div class="action-row">
@@ -132,6 +149,7 @@
       <article class="panel preview-card">
         <div class="panel-header compact">
           <h2>4. Preview output</h2>
+          <small id="outputPreviewLabel" class="preview-label">Hasil akan tampil setelah diproses.</small>
         </div>
         <div class="preview-box">
           <img id="outputPreview" alt="Preview gambar hasil optimasi">

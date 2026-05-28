@@ -15,6 +15,18 @@ export function downloadBlob(blob, filename) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+export function downloadMany(files) {
+  if (!Array.isArray(files) || files.length === 0) {
+    throw new Error("Belum ada file untuk diunduh.");
+  }
+
+  files.forEach((item, index) => {
+    window.setTimeout(() => {
+      downloadBlob(item.blob, item.name);
+    }, index * 180);
+  });
+}
+
 export async function copyText(text) {
   if (!text) return;
 

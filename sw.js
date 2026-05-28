@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.1-heic";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.2-responsive";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,9 +6,9 @@ const APP_SHELL = [
   "./css/app.css",
   "./js/app.js",
   "./js/imageProcessor.js",
+  "./js/heicAdapter.js",
   "./js/downloadHelper.js",
   "./js/reportHelper.js",
-  "./js/heicAdapter.js",
   "./assets/icons/icon.svg",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png"
@@ -53,7 +53,6 @@ self.addEventListener("fetch", (event) => {
 
           const responseClone = response.clone();
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, responseClone));
-
           return response;
         })
         .catch(() => caches.match("./index.html"));

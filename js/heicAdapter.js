@@ -73,7 +73,6 @@ async function loadHeic2Any() {
         if (!window.heic2any) {
           throw new Error("Library HEIC decoder belum tersedia.");
         }
-
         return window.heic2any;
       })
       .catch(() => {
@@ -104,7 +103,6 @@ function loadScript(src) {
     script.dataset.heic2any = src;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error(`Gagal memuat ${src}`));
-
     document.head.appendChild(script);
   });
 }
