@@ -211,7 +211,7 @@ export function renderBatchReport({ items, outputFiles, outputMode }) {
     </table>
 
     <div class="note-box">
-      Tombol <strong>Download hasil</strong> akan membuat file ZIP berisi semua output batch.
+      Tombol <strong>Download hasil</strong> akan membuat file ZIP rapi berisi folder <code>assets/images</code>, <code>snippets</code>, dan <code>reports</code>.
     </div>
   `;
 }

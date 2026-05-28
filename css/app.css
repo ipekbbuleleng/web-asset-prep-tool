@@ -210,6 +210,13 @@ h3 { margin: 1rem 0 0.65rem; font-size: 0.96rem; }
   text-align: left;
   vertical-align: top;
 }
+.batch-table td.actions-cell { white-space: nowrap; }
+.mini-btn {
+  border-radius: 999px;
+  padding: 0.42rem 0.7rem;
+  font-size: 0.82rem;
+}
+.mini-btn + .mini-btn { margin-left: 0.35rem; }
 .batch-table th {
   background: var(--panel-soft);
   color: var(--muted);

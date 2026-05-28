@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.3-batch";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.3-r3-r1-zip-polish";
 const APP_SHELL = [
   "./",
   "./index.html",
