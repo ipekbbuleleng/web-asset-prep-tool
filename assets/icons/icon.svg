@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Web Asset Prep Tool</title>
+  <desc id="desc">Ikon aplikasi berbentuk kartu gambar dengan tanda optimasi.</desc>
+  <rect width="512" height="512" rx="112" fill="#0f766e"/>
+  <rect x="92" y="126" width="328" height="260" rx="38" fill="#ccfbf1"/>
+  <path d="M126 326l82-92 64 70 48-48 66 70v22H126z" fill="#0f766e"/>
+  <circle cx="338" cy="188" r="34" fill="#14b8a6"/>
+  <path d="M172 410h168" stroke="#ccfbf1" stroke-width="30" stroke-linecap="round"/>
+  <path d="M188 82h136" stroke="#ccfbf1" stroke-width="30" stroke-linecap="round"/>
+</svg>
