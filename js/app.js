@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-r3-r4-r3-tool-mode-separation";
+const APP_VERSION = "1.0.6-r5-r3-r4-r3-r1-tool-mode-visible-fix";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {

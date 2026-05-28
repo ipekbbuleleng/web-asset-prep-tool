@@ -885,3 +885,76 @@ body.is-image-tool .bg-tool-only {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v1-R5-R3-R4-R3-R1 — Tool mode visible fix */
+.tool-mode-panel {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0.9rem 0 1rem;
+  padding: 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-soft);
+}
+
+.tool-mode-panel h3 {
+  margin: 0 0 0.25rem;
+}
+
+.tool-mode-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.tool-mode-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.tool-mode-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: flex-start;
+  min-height: 5.2rem;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.tool-mode-card input {
+  margin-top: 0.2rem;
+}
+
+.tool-mode-card:has(input:checked) {
+  border-color: rgba(15, 118, 110, 0.45);
+  background: rgba(204, 251, 241, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.12);
+}
+
+.tool-mode-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.tool-mode-card small {
+  display: block;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.bg-tool-only[hidden],
+body.is-image-tool .bg-tool-only {
+  display: none !important;
+}
+
+@media (max-width: 820px) {
+  .tool-mode-options {
+    grid-template-columns: 1fr;
+  }
+}

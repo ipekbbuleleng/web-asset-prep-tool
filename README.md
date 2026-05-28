@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R4-R3 — Image Tool Mode Separation
+# Web Asset Prep Tool v1-R5-R3-R4-R3-R1 — Tool Mode Visible Fix
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -408,3 +408,16 @@ Perubahan:
 Catatan:
 - Preview original/output tetap dipertahankan untuk kedua mode karena masih dibutuhkan untuk memeriksa hasil optimasi gambar.
 - Detail hapus background hanya muncul bila Background Remover aktif dan output memiliki data hapus background.
+
+
+## Perbaikan v1-R5-R3-R4-R3-R1 — Tool Mode Visible Fix
+
+Paket ini memperbaiki catatan uji bahwa pilihan tool belum tampil pada Image Tool.
+
+Perbaikan:
+- Panel `Pilih tool` disisipkan ulang secara eksplisit pada bagian `Atur output`.
+- Pilihan tool tampil sebelum field preset/output.
+- Mode `Image Optimizer Biasa` tetap menjadi default.
+- Mode `Background Remover Ringan` menampilkan panel hapus background dan compare before/after.
+- Panel Background Remover dan Compare tetap disembunyikan saat mode Image Optimizer Biasa aktif.
+- Service worker cache version dinaikkan.

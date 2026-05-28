@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4-R3</title>
+  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4-R3-R1</title>
   <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -74,7 +74,32 @@
         </div>
       </div>
 
-      <form id="settingsForm" class="settings-grid">
+      
+      <div class="tool-mode-panel" aria-labelledby="tool-mode-title">
+        <div>
+          <h3 id="tool-mode-title">Pilih tool</h3>
+          <p>Gunakan Image Optimizer untuk resize/convert biasa. Gunakan Background Remover hanya untuk logo/gambar dengan latar polos.</p>
+        </div>
+
+        <div class="tool-mode-options" role="radiogroup" aria-label="Pilih mode Image Tool">
+          <label class="tool-mode-card">
+            <input type="radio" name="toolMode" id="toolModeImage" value="image" checked>
+            <span>
+              <strong>Image Optimizer Biasa</strong>
+              <small>Resize, convert WebP/JPG/PNG, responsive image, batch ZIP.</small>
+            </span>
+          </label>
+
+          <label class="tool-mode-card">
+            <input type="radio" name="toolMode" id="toolModeBackground" value="background">
+            <span>
+              <strong>Background Remover Ringan</strong>
+              <small>Hapus background polos, pick warna dari gambar, connected area, compare.</small>
+            </span>
+          </label>
+        </div>
+      </div>
+<form id="settingsForm" class="settings-grid">
         <label>
           Preset
           <select id="presetSelect">

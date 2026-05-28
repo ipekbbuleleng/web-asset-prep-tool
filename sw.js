@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.6-r5-r3-r4-r3-tool-mode-separation";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.6-r5-r3-r4-r3-r1-tool-mode-visible-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

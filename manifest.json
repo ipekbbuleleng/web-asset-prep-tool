@@ -1,7 +1,7 @@
 {
   "name": "Web Asset Prep Tool",
   "short_name": "Asset Prep",
-  "description": "Portal PWA lokal untuk Image Optimizer biasa, Background Remover ringan terpisah, SVG tracing, video/animation, dan document/office.",
+  "description": "Portal PWA lokal untuk Image Optimizer biasa dan Background Remover ringan dengan tool mode visible fix.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
