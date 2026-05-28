@@ -1,7 +1,7 @@
 {
   "name": "Web Asset Prep Tool v1-R5-FINAL",
   "short_name": "Asset Prep",
-  "description": "PWA lokal tanpa backend untuk Image & Vector Prep stabil v1: image optimizer, responsive image, batch ZIP, HEIC/HEIF, SVG optimizer, raster tracer, dan background remover ringan.",
+  "description": "Portal PWA lokal untuk menyiapkan aset web. Image & Vector Prep dikunci sebagai v1-R5-FINAL.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

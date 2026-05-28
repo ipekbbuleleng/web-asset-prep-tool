@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.6-r5-final-image-vector";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.6-r5-final-r1-landing-badge-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

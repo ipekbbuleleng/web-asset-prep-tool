@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-final-image-vector";
+const APP_VERSION = "1.0.6-r5-final-r1-landing-badge-fix";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {

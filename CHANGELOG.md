@@ -30,3 +30,9 @@ Catatan batasan:
 1. v1-R6 — Video & Animation Prep Basic.
 2. v1-R7 — Document & Office Prep Basic.
 3. v2 — Optional backend/hybrid untuk proses berat.
+
+
+## v1-R5-FINAL-R1 — Landing Badge Hard Fix
+- Fixed landing page badge still showing previous version.
+- Locked visible landing badge to `v1-R5-FINAL`.
+- Aligned `index.html`, `manifest.json`, `sw.js`, and `VERSION.json`.

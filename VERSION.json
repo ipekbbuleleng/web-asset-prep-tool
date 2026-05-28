@@ -1,8 +1,8 @@
 {
   "app": "Web Asset Prep Tool",
   "version_label": "v1-R5-FINAL",
-  "app_version": "1.0.6-r5-final-image-vector",
-  "cache_version": "web-asset-prep-tool-v1.0.6-r5-final-image-vector",
+  "app_version": "1.0.6-r5-final-r1-landing-badge-fix",
+  "cache_version": "web-asset-prep-tool-v1.0.6-r5-final-r1-landing-badge-fix",
   "status": "stable-v1-image-vector",
   "locked_scope": [
     "Image Optimizer",
@@ -17,5 +17,6 @@
     "Video & Animation Prep masih fondasi modul.",
     "Document & Office Prep masih fondasi modul.",
     "AI Background Remover belum termasuk paket final v1-R5."
-  ]
+  ],
+  "patch": "R1 Landing Badge Hard Fix"
 }

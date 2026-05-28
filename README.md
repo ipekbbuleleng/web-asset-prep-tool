@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-FINAL — Image & Vector Prep Stabilization
+# Web Asset Prep Tool v1-R5-FINAL-R1 — Landing Badge Hard Fix
 
 **Web Asset Prep Tool** adalah PWA lokal tanpa backend untuk menyiapkan aset sebelum masuk ke repository web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -111,3 +111,20 @@ Rekomendasi lanjutan:
 1. `v1-R6 — Video & Animation Prep Basic`
 2. `v1-R7 — Document & Office Prep Basic`
 3. `v2 — Hybrid/backend processing untuk proses berat`
+
+
+## Patch v1-R5-FINAL-R1 — Landing Badge Hard Fix
+
+Patch ini memperbaiki catatan uji bahwa landing page masih menampilkan badge versi lama.
+
+Perbaikan:
+- Badge versi di `index.html` dikunci eksplisit menjadi `v1-R5-FINAL`.
+- Teks landing page diselaraskan dengan status final Image & Vector Prep.
+- Status kartu Image & Vector Prep diselaraskan ke status stabil v1.
+- Ditambahkan panel `Version lock: v1-R5-FINAL` di landing page.
+- `sw.js`, `manifest.json`, dan `VERSION.json` diselaraskan.
+- Service worker cache version dinaikkan.
+
+Catatan penting:
+- Tulisan badge di landing page dibaca dari `index.html`, bukan dari `sw.js`.
+- `sw.js` hanya mengatur cache/service worker, bukan sumber teks tampilan halaman.

@@ -995,3 +995,20 @@ body.is-background-tool .tool-mode-panel {
 body.is-image-tool .tool-mode-panel {
   border-color: var(--line);
 }
+
+
+/* v1-R5-FINAL-R1 — landing badge hard fix */
+.version-lock-panel {
+  margin-top: 1rem;
+}
+
+.version-lock-panel h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.version-lock-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
