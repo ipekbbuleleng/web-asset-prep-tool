@@ -18,7 +18,7 @@ import {
   svgTextToObjectUrl
 } from "./svgProcessor.js";
 
-const APP_VERSION = "1.0.4-svg";
+const APP_VERSION = "1.0.6-r5-final-image-vector";
 const MAX_SVG_FILES = 80;
 
 const state = {

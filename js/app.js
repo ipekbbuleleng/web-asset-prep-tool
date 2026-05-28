@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-r3-r4-r3-r2-checkbox-polish";
+const APP_VERSION = "1.0.6-r5-final-image-vector";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {

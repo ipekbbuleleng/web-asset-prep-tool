@@ -19,7 +19,7 @@ import {
   svgTextToObjectUrl
 } from "./rasterTracer.js";
 
-const APP_VERSION = "1.0.5-r2-tracer-presets";
+const APP_VERSION = "1.0.6-r5-final-image-vector";
 
 const TRACER_PRESETS = {
   icon: {

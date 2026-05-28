@@ -1,0 +1,21 @@
+{
+  "app": "Web Asset Prep Tool",
+  "version_label": "v1-R5-FINAL",
+  "app_version": "1.0.6-r5-final-image-vector",
+  "cache_version": "web-asset-prep-tool-v1.0.6-r5-final-image-vector",
+  "status": "stable-v1-image-vector",
+  "locked_scope": [
+    "Image Optimizer",
+    "Responsive Image Generator",
+    "Batch Processing ZIP",
+    "HEIC/HEIF support",
+    "SVG Optimizer Ringan",
+    "Raster to SVG Tracer Eksperimental",
+    "Background Remover Ringan"
+  ],
+  "notes": [
+    "Video & Animation Prep masih fondasi modul.",
+    "Document & Office Prep masih fondasi modul.",
+    "AI Background Remover belum termasuk paket final v1-R5."
+  ]
+}
