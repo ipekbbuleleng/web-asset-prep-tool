@@ -1,4 +1,4 @@
-const CACHE_VERSION = "web-asset-prep-tool-v1.0.2-responsive";
+const CACHE_VERSION = "web-asset-prep-tool-v1.0.2-r2-r1-naming-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

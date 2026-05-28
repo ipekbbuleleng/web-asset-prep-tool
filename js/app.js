@@ -27,7 +27,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.2-responsive";
+const APP_VERSION = "1.0.2-r2-r1";
 
 const PRESETS = {
   custom: null,
@@ -35,21 +35,21 @@ const PRESETS = {
     width: 1200,
     quality: 80,
     mimeType: "image/webp",
-    suffix: "kegiatan",
+    suffix: "kegiatan-1200",
     responsiveMode: false
   },
   thumb: {
     width: 480,
     quality: 75,
     mimeType: "image/webp",
-    suffix: "kegiatan-thumb",
+    suffix: "kegiatan-thumb-480",
     responsiveMode: false
   },
   profile: {
     width: 512,
     quality: 80,
     mimeType: "image/webp",
-    suffix: "profile",
+    suffix: "profile-512",
     responsiveMode: false
   },
   hero: {
@@ -65,7 +65,7 @@ const PRESETS = {
     width: 1200,
     quality: 85,
     mimeType: "image/webp",
-    suffix: "screenshot",
+    suffix: "screenshot-1200",
     responsiveMode: false
   }
 };
@@ -81,7 +81,8 @@ const state = {
   outputObjectUrl: null,
   outputName: "",
   responsiveOutputs: [],
-  snippet: ""
+  snippet: "",
+  outputNameTouched: false
 };
 
 const els = {
@@ -146,25 +147,33 @@ function bindEvents() {
     if (file) handleFile(file);
   });
 
-  els.presetSelect.addEventListener("change", applyPreset);
+  els.presetSelect.addEventListener("change", () => {
+    state.outputNameTouched = false;
+    applyPreset();
+  });
+
   els.qualityInput.addEventListener("input", updateQualityLabel);
   els.processBtn.addEventListener("click", processCurrentFile);
   els.downloadBtn.addEventListener("click", downloadCurrentOutput);
   els.copySnippetBtn.addEventListener("click", copyCurrentSnippet);
   els.resetBtn.addEventListener("click", resetApp);
+
   els.responsiveModeInput.addEventListener("change", () => {
+    state.outputNameTouched = false;
     syncResponsiveControls();
-    if (state.file && !els.outputNameInput.value.trim()) {
-      suggestOutputName();
-    }
+    updateOutputNameSuggestion(true);
   });
 
-  [els.formatSelect, els.widthInput, els.responsiveWidthsInput].forEach((element) => {
+  [els.widthInput, els.responsiveWidthsInput].forEach((element) => {
     element.addEventListener("input", () => {
-      if (state.file && !els.outputNameInput.value.trim()) {
-        suggestOutputName();
+      if (!state.outputNameTouched) {
+        updateOutputNameSuggestion(false);
       }
     });
+  });
+
+  els.outputNameInput.addEventListener("input", () => {
+    state.outputNameTouched = !!els.outputNameInput.value.trim();
   });
 }
 
@@ -184,6 +193,7 @@ async function handleFile(file) {
     state.processableFile = file;
     state.isHeicInput = isHeic;
     state.heicNotice = "";
+    state.outputNameTouched = false;
 
     if (isHeic) {
       showToast("Membaca HEIC/HEIF. Proses awal bisa lebih lama...");
@@ -209,7 +219,7 @@ async function handleFile(file) {
       ${heicBadge}
     `;
 
-    suggestOutputName();
+    updateOutputNameSuggestion(true);
 
     if (!Number(els.widthInput.value)) {
       els.widthInput.value = Math.min(1200, state.originalMeta.width);
@@ -227,6 +237,7 @@ async function handleFile(file) {
 function applyPreset() {
   const preset = PRESETS[els.presetSelect.value];
   if (!preset) {
+    updateOutputNameSuggestion(true);
     return;
   }
 
@@ -245,11 +256,7 @@ function applyPreset() {
 
   updateQualityLabel();
   syncResponsiveControls();
-
-  if (state.file) {
-    const base = sanitizeFileBaseName(stripExtension(state.file.name));
-    els.outputNameInput.value = `${base}-${preset.suffix}`;
-  }
+  updateOutputNameSuggestion(true);
 }
 
 function syncResponsiveControls() {
@@ -259,19 +266,33 @@ function syncResponsiveControls() {
   els.widthInput.disabled = isResponsive;
 }
 
-function suggestOutputName() {
-  if (!state.file) return;
+function getCurrentPreset() {
+  return PRESETS[els.presetSelect.value] || null;
+}
 
-  const base = sanitizeFileBaseName(stripExtension(state.file.name));
-  const ext = getOutputExtension(els.formatSelect.value);
+function computeSuggestedBaseName() {
+  const fileBase = sanitizeFileBaseName(stripExtension(state.file?.name || "asset"));
+  const preset = getCurrentPreset();
+
+  if (preset?.suffix) {
+    return `${fileBase}-${preset.suffix}`;
+  }
 
   if (els.responsiveModeInput.checked) {
-    els.outputNameInput.placeholder = `${base}-hero`;
-    return;
+    return `${fileBase}-responsive`;
   }
 
   const width = Number(els.widthInput.value) || 1200;
-  els.outputNameInput.placeholder = `${base}-${width}.${ext}`;
+  return `${fileBase}-${width}`;
+}
+
+function updateOutputNameSuggestion(force = false) {
+  const suggestion = computeSuggestedBaseName();
+  els.outputNameInput.placeholder = suggestion;
+
+  if (force || !els.outputNameInput.value.trim() || !state.outputNameTouched) {
+    els.outputNameInput.value = suggestion;
+  }
 }
 
 async function processCurrentFile() {
@@ -289,8 +310,7 @@ async function processCurrentFile() {
     const ext = getOutputExtension(mimeType);
     const responsiveMode = els.responsiveModeInput.checked;
     const baseName = sanitizeFileBaseName(
-      els.outputNameInput.value.trim() ||
-      (responsiveMode ? `${stripExtension(state.file.name)}-responsive` : `${stripExtension(state.file.name)}-${els.widthInput.value}`)
+      els.outputNameInput.value.trim() || computeSuggestedBaseName()
     );
 
     if (responsiveMode) {
@@ -475,6 +495,7 @@ function resetApp() {
   state.isHeicInput = false;
   state.heicNotice = "";
   state.originalMeta = null;
+  state.outputNameTouched = false;
 
   els.fileInput.value = "";
   els.fileInfo.className = "file-info empty";
