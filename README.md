@@ -1,4 +1,4 @@
-# Web Asset Prep Tool v1-R5-R3-R4-R2 — Compare Helper Text Alignment & Transparency Preview Note
+# Web Asset Prep Tool v1-R5-R3-R4-R3 — Image Tool Mode Separation
 
 PWA lokal tanpa backend untuk menyiapkan aset gambar sebelum digunakan pada aplikasi web, PWA, landing page, dashboard, portal publik, atau sistem internal.
 
@@ -384,3 +384,27 @@ Perbaikan:
 
 Catatan:
 - Untuk validasi transparansi, cek output di browser, editor gambar, atau halaman web yang mendukung transparansi WebP/PNG.
+
+
+## Perbaikan v1-R5-R3-R4-R3 — Image Tool Mode Separation
+
+Paket ini memisahkan mode kerja di `image.html` agar pengguna tidak bingung antara Image Optimizer biasa dan Background Remover Ringan.
+
+Perubahan:
+- Tambah pilihan tool:
+  - `Image Optimizer Biasa`
+  - `Background Remover Ringan`
+- Saat `Image Optimizer Biasa` dipilih:
+  - panel Background Remover disembunyikan;
+  - Compare before/after disembunyikan;
+  - proses resize/convert/responsive/batch tetap berjalan seperti biasa.
+- Saat `Background Remover Ringan` dipilih:
+  - panel hapus background tampil;
+  - compare before/after tampil;
+  - fitur color picker dan connected area tetap aktif.
+- Reset setting mengembalikan mode ke `Image Optimizer Biasa`.
+- Service worker cache version dinaikkan.
+
+Catatan:
+- Preview original/output tetap dipertahankan untuk kedua mode karena masih dibutuhkan untuk memeriksa hasil optimasi gambar.
+- Detail hapus background hanya muncul bila Background Remover aktif dan output memiliki data hapus background.

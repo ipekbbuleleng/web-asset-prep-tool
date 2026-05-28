@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4-R2</title>
+  <title>Image & Vector Prep — Web Asset Prep Tool v1-R5-R3-R4-R3</title>
   <meta name="description" content="PWA lokal untuk batch upload, resize, convert WebP, HEIC input, responsive image generator, ZIP download, dan HTML snippet.">
   <meta name="theme-color" content="#0f766e">
   <link rel="manifest" href="./manifest.json">
@@ -70,7 +70,7 @@
       <div class="panel-header">
         <div>
           <h2 id="settings-title">2. Atur output</h2>
-          <p>Pilih preset atau atur manual. Aktifkan hapus background untuk logo/gambar dengan latar polos.</p>
+          <p>Pilih mode tool terlebih dahulu agar tampilan hanya menampilkan fitur yang diperlukan.</p>
         </div>
       </div>
 
@@ -147,7 +147,7 @@
       </form>
 
 
-      <div class="background-options" aria-labelledby="bg-options-title">
+      <div class="background-options bg-tool-only" aria-labelledby="bg-options-title">
         <div class="panel-header compact">
           <div>
             <h3 id="bg-options-title">Background Remover Ringan</h3>
@@ -240,7 +240,7 @@
       </article>
     </section>
 
-    <section class="panel compare-panel" aria-labelledby="compare-title">
+    <section class="panel compare-panel bg-tool-only" aria-labelledby="compare-title">
       <div class="panel-header">
         <div>
           <h2 id="compare-title">4B. Compare before/after</h2>

@@ -28,7 +28,7 @@ import {
   isHeicFile
 } from "./heicAdapter.js";
 
-const APP_VERSION = "1.0.6-r5-r3-r4-r2-compare-text-transparency-note";
+const APP_VERSION = "1.0.6-r5-r3-r4-r3-tool-mode-separation";
 const MAX_BATCH_FILES = 30;
 
 const PRESETS = {
@@ -47,6 +47,7 @@ const state = {
   outputFiles: [],
   snippet: "",
   outputNameTouched: false,
+  toolMode: "image",
   bgColorPickerArmed: false,
   bgPickedPoint: null
 };
@@ -57,6 +58,8 @@ const els = {
   fileInfo: document.querySelector("#fileInfo"),
   batchList: document.querySelector("#batchList"),
   presetSelect: document.querySelector("#presetSelect"),
+  toolModeImage: document.querySelector("#toolModeImage"),
+  toolModeBackground: document.querySelector("#toolModeBackground"),
   outputNameInput: document.querySelector("#outputNameInput"),
   widthInput: document.querySelector("#widthInput"),
   formatSelect: document.querySelector("#formatSelect"),
@@ -108,6 +111,7 @@ function boot() {
   syncBackgroundControls();
   updateBackgroundLabels();
   updateCompareSlider();
+  updateToolModeView();
   updateCompareView();
   console.info(`Web Asset Prep Tool v${APP_VERSION} aktif`);
 }
@@ -172,6 +176,14 @@ function bindEvents() {
 
   els.outputNameInput.addEventListener("input", () => {
     state.outputNameTouched = !!els.outputNameInput.value.trim();
+  });
+
+  [els.toolModeImage, els.toolModeBackground].forEach((element) => {
+    element?.addEventListener("change", () => {
+      if (element.checked) {
+        setToolMode(element.value);
+      }
+    });
   });
 
   els.bgRemoveInput?.addEventListener("change", () => {
@@ -290,8 +302,8 @@ function updateOriginalPreview() {
 }
 
 function toggleBackgroundColorPicker() {
-  if (!els.bgRemoveInput?.checked) {
-    showToast("Aktifkan hapus background terlebih dahulu.");
+  if (state.toolMode !== "background" || !els.bgRemoveInput?.checked) {
+    showToast("Aktifkan mode Background Remover terlebih dahulu.");
     return;
   }
 
@@ -384,6 +396,46 @@ function handleOriginalPreviewColorPick(event) {
 
 function rgbToHex(r, g, b) {
   return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function setToolMode(mode) {
+  state.toolMode = mode === "background" ? "background" : "image";
+
+  if (els.toolModeImage) els.toolModeImage.checked = state.toolMode === "image";
+  if (els.toolModeBackground) els.toolModeBackground.checked = state.toolMode === "background";
+
+  if (els.bgRemoveInput) {
+    els.bgRemoveInput.checked = state.toolMode === "background";
+  }
+
+  if (state.toolMode !== "background") {
+    setBackgroundPickerArmed(false);
+  }
+
+  clearOutputOnly();
+  syncBackgroundControls();
+  updateToolModeView();
+  updateFileInfo();
+  showToast(state.toolMode === "background" ? "Mode Background Remover aktif." : "Mode Image Optimizer aktif.");
+}
+
+function updateToolModeView() {
+  const isBackgroundMode = state.toolMode === "background";
+  document.body.classList.toggle("is-background-tool", isBackgroundMode);
+  document.body.classList.toggle("is-image-tool", !isBackgroundMode);
+
+  document.querySelectorAll(".bg-tool-only").forEach((element) => {
+    element.hidden = !isBackgroundMode;
+    element.setAttribute("aria-hidden", isBackgroundMode ? "false" : "true");
+  });
+
+  if (els.bgRemoveInput) {
+    els.bgRemoveInput.checked = isBackgroundMode;
+  }
+
+  syncBackgroundControls();
+  updateBackgroundSafetyBox();
+  updateCompareView();
 }
 
 function updateCompareSlider() {
@@ -823,6 +875,9 @@ function resetSettingsValues() {
   els.outputNameInput.value = "";
   els.altInput.value = "";
   els.presetSelect.value = "custom";
+  state.toolMode = "image";
+  if (els.toolModeImage) els.toolModeImage.checked = true;
+  if (els.toolModeBackground) els.toolModeBackground.checked = false;
   els.widthInput.value = 1200;
   els.formatSelect.value = "image/webp";
   els.qualityInput.value = 80;
@@ -841,6 +896,7 @@ function resetSettingsValues() {
   state.bgPickedPoint = null;
   syncResponsiveControls();
   syncBackgroundControls();
+  updateToolModeView();
   updateQualityLabel();
   updateBackgroundLabels();
 }
@@ -858,7 +914,7 @@ function getEffectiveOutputMimeType() {
 }
 
 function getBackgroundRemovalOptions() {
-  const enabled = !!els.bgRemoveInput?.checked;
+  const enabled = state.toolMode === "background" && !!els.bgRemoveInput?.checked;
 
   return {
     enabled,
@@ -872,7 +928,7 @@ function getBackgroundRemovalOptions() {
 }
 
 function syncBackgroundControls() {
-  const enabled = !!els.bgRemoveInput?.checked;
+  const enabled = state.toolMode === "background" && !!els.bgRemoveInput?.checked;
   const manual = els.bgModeSelect?.value === "manual";
 
   [els.bgConnectedInput, els.bgModeSelect, els.bgToleranceInput, els.bgFeatherInput].forEach((element) => {
